@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "862517015998",
+    "project_id": "playthefut",
+    "storage_bucket": "playthefut.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:862517015998:android:41b533d57f2c41a586f5ef",
+        "android_client_info": {
+          "package_name": "com.example.playthefit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYUUj70VZAKQ5DyxVhTWxQzb77DayBO28"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
