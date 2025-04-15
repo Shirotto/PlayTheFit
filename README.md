@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # playthefit
 
 A new Flutter project.
@@ -15,4 +16,8 @@ For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 "# Nome della Repository" 
+"# PlayTheFit" 
+=======
+# PlayTheFit
+>>>>>>> bee1e2cb4b29dff338a636c374753a95cdb56da0
 "# PlayTheFit" 
