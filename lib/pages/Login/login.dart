@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../Components/Heading.dart';
-import '../Components/card_button.dart';
-import '../Components/custom_container.dart';
-import '../Components/social_media_icons.dart';
+import '../../Components/Heading.dart';
+import '../../Components/card_button.dart';
+import '../../Components/custom_container.dart';
+import '../../Components/social_media_icons.dart';
+import '../../pages/scheda_allenamento_page.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -59,7 +60,29 @@ class _LoginState extends State<Login> {
                         name: name,
                       ),)),
                       const SizedBox(height: 20,),
-                      signup ? const CardButton(txt: "Registrati") : const CardButton(txt: "Login"),
+                      signup 
+                         ? CardButton(
+                            txt: "Registrati",
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SchedaAllenamentoPage(),
+                                ),
+                              );
+                            },  
+                          )
+                         : CardButton(
+                            txt: "Login",
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SchedaAllenamentoPage(),
+                                ),
+                              );
+                            },
+                          ),
                       const SizedBox(height: 20,),
                       GestureDetector(
                         onTap: onTap,
