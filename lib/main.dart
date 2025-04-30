@@ -4,6 +4,8 @@ import 'package:playthefit/Login/login.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+
 
 void main() async { // 1. Rendi la funzione main 'async'
 
