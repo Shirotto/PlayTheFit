@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 // Assicurati che il percorso sia corretto per la tua struttura di cartelle
-import 'package:playthefit/Login/login.dart';
+import 'package:playthefit/pages/login.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';

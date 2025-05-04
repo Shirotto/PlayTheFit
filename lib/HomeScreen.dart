@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'pages/scheda_allenamento_page.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -11,12 +12,6 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Benvenuto"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => FirebaseAuth.instance.signOut(),
-          )
-        ],
       ),
       body: Center(
         child: Column(
@@ -28,6 +23,17 @@ class HomeScreen extends StatelessWidget {
               icon: const Icon(Icons.logout),
               label: const Text("Logout"),
               onPressed: () => FirebaseAuth.instance.signOut(),
+            ),
+            ElevatedButton.icon(
+                icon: const Icon(Icons.analytics),
+                label: const Text("Allenamento"),
+                onPressed: () {
+                  // Navigate to the new page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SchedaAllenamentoPage()),
+                  );
+                },
             ),
           ],
         ),
