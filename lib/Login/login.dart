@@ -96,9 +96,17 @@ class _LoginState extends State<Login> {
     );
   }
 
-  onTap(){
+void onTap() {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => const SignupPage()),
+  );
+}
+
+
+/*  onTap(){
     signup=!signup;
     setState((){});
-  }
+  } */
 
 }
