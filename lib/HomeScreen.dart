@@ -3,6 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
 import 'pages/scheda_allenamento_page.dart';
 
+/// Widget principale della schermata Home dell'applicazione.
+/// Mostra il personaggio dell'utente, il suo livello, sfide giornaliere
+/// e fornisce accesso alle funzionalità principali dell'app.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -13,36 +16,29 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final User user = FirebaseAuth.instance.currentUser!;
 
-  // Variabili per il sistema di livelli (da collegare a un database in futuro)
-  final int userLevel = 5; // Esempio di livello utente
-  final double expProgress = 0.7; // Valore da 0 a 1 per la barra di esperienza
-  final String characterAsset =
-      'assets/character.png'; // Da sostituire con il percorso reale
+  // Configurazione del sistema di progressione
+  final int userLevel = 5;
+  final double expProgress = 0.7;
+  final String characterAsset = 'assets/character.png';
+  
+  // Stato della navigazione
+  int _selectedIndex = 0;
 
   // Controllers per le animazioni
   late AnimationController _characterAnimationController;
   late AnimationController _particleAnimationController;
   late AnimationController _experienceBarAnimationController;
   late AnimationController _profileIconAnimationController;
-  late AnimationController _settingsIconAnimationController;
 
   late Animation<double> _characterScaleAnimation;
   late Animation<double> _experienceBarAnimation;
   late Animation<double> _profileIconAnimation;
-  late Animation<double> _settingsIconAnimation;
-
-  // Stato per gli effetti di click
-  bool _isProfilePressed = false;
-  bool _isSettingsPressed = false;
-  bool _isTrainingButtonPressed = false;
-  bool _isStatsButtonPressed = false;
-  bool _isMissionsButtonPressed = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Animazione del personaggio (effetto respiro)
+    // Inizializza animazione "respiro" del personaggio
     _characterAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -55,15 +51,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
 
-    // Animazione particelle (molto più lenta)
+    // Inizializza animazione dello sfondo stellato
     _particleAnimationController = AnimationController(
       vsync: this,
-      duration: const Duration(
-        seconds: 60,
-      ), // Movimento molto lento (un minuto per ciclo)
+      duration: const Duration(seconds: 60),
     )..repeat();
 
-    // Animazione barra esperienza
+    // Inizializza animazione per la barra esperienza
     _experienceBarAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -74,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       end: 1.0,
     ).animate(_experienceBarAnimationController);
 
-    // Animazione icona profilo
+    // Inizializza animazione per l'icona profilo
     _profileIconAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -84,637 +78,551 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       begin: 0.0,
       end: 1.0,
     ).animate(_profileIconAnimationController);
-
-    // Animazione icona impostazioni
-    _settingsIconAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
-    )..repeat();
-
-    _settingsIconAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(_settingsIconAnimationController);
   }
 
   @override
   void dispose() {
+    // Rilascia tutte le risorse delle animazioni
     _characterAnimationController.dispose();
     _particleAnimationController.dispose();
     _experienceBarAnimationController.dispose();
     _profileIconAnimationController.dispose();
-    _settingsIconAnimationController.dispose();
     super.dispose();
+  }
+  
+  /// Gestisce la navigazione quando viene selezionato un elemento della barra inferiore
+  void _onNavItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    
+    // Gestione della navigazione in base all'elemento selezionato
+    switch(index) {
+      case 0: // Home (già visualizzata)
+        break;
+      case 1: // Statistiche
+        // TODO: Implementare navigazione alle statistiche
+        break;
+      case 2: // Allenamento
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SchedaAllenamentoPage(),
+          ),
+        );
+        break;
+      case 3: // Missioni
+        // TODO: Implementare navigazione alle missioni
+        break;
+      case 4: // Profilo
+        // TODO: Implementare navigazione al profilo
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black87,
+      bottomNavigationBar: _buildNavigationBar(),
       body: Stack(
         children: [
-          // Sfondo con gradiente
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.indigo.shade900, Colors.black],
-              ),
+          _buildBackground(),
+          _buildStarfieldAnimation(),
+          _buildMainContent(),
+        ],
+      ),
+    );
+  }
+
+  /// Costruisce la barra di navigazione inferiore con pulsante centrale evidenziato
+  Widget _buildNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.3),
+            blurRadius: 10,
+            spreadRadius: -3,
+          ),
+        ],
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onNavItemTapped,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.black,
+          selectedItemColor: Colors.blue,
+          unselectedItemColor: Colors.grey,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 11,
+          ),
+          items: [
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.home_rounded),
+              label: 'Home',
             ),
-          ),
-
-          // Stelle/particelle che si muovono molto lentamente
-          AnimatedBuilder(
-            animation: _particleAnimationController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: SlowStarfieldPainter(
-                  animation: _particleAnimationController.value,
-                ),
-                size: Size.infinite,
-              );
-            },
-          ),
-
-          // Contenuto principale
-          SafeArea(
-            child: Column(
-              children: [
-                // Header con bottone profilo, nome utente, livello e impostazioni
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 15,
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart),
+              label: 'Statistiche',
+            ),
+            // Pulsante centrale più grande e prominente
+            BottomNavigationBarItem(
+              icon: Container(
+                height: 56,
+                width: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Colors.blue.shade700, Colors.blue.shade900],
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Bottone Profilo Animato
-                      GestureDetector(
-                        onTapDown:
-                            (_) => setState(() => _isProfilePressed = true),
-                        onTapUp:
-                            (_) => setState(() => _isProfilePressed = false),
-                        onTapCancel:
-                            () => setState(() => _isProfilePressed = false),
-                        onTap: () {
-                          // Naviga alla pagina profilo (da implementare)
-                        },
-                        child: AnimatedBuilder(
-                          animation: _profileIconAnimation,
-                          builder: (context, child) {
-                            // Rimuovo la pulsazione mantenendo solo l'effetto bagliore
-                            const pulseValue =
-                                1.0; // Valore fisso senza pulsazione
-                            final glowOpacity =
-                                0.5 +
-                                0.3 *
-                                    math.sin(
-                                      _profileIconAnimation.value * math.pi,
-                                    );
-
-                            return Transform.scale(
-                              scale: _isProfilePressed ? 1.2 : pulseValue,
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color:
-                                      _isProfilePressed
-                                          ? Colors.lightBlue.shade400
-                                              .withOpacity(0.9)
-                                          : Colors.blue.shade900.withOpacity(
-                                            0.7,
-                                          ),
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          _isProfilePressed
-                                              ? Colors.lightBlue.withOpacity(
-                                                0.8,
-                                              )
-                                              : Colors.blue.withOpacity(
-                                                glowOpacity,
-                                              ),
-                                      spreadRadius: _isProfilePressed ? 3 : 1,
-                                      blurRadius: _isProfilePressed ? 12 : 6,
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                  size: 22,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-
-                      // Nome Utente
-                      Text(
-                        "${user.email?.split('@').first ?? 'Player'}",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          shadows: [
-                            Shadow(
-                              blurRadius: 10.0,
-                              color: Colors.blue,
-                              offset: Offset(0, 0),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Livello con Ingranaggio Impostazioni
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade800,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.blue.withOpacity(0.5),
-                                  spreadRadius: 1,
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 0),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.star,
-                                  color: Colors.amber,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  "LV $userLevel",
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-
-                          // Icona Impostazioni Animata
-                          GestureDetector(
-                            onTapDown:
-                                (_) =>
-                                    setState(() => _isSettingsPressed = true),
-                            onTapUp:
-                                (_) =>
-                                    setState(() => _isSettingsPressed = false),
-                            onTapCancel:
-                                () =>
-                                    setState(() => _isSettingsPressed = false),
-                            onTap: () {
-                              // Naviga alla pagina impostazioni (da implementare)
-                            },
-                            child: AnimatedBuilder(
-                              animation: _settingsIconAnimation,
-                              builder: (context, child) {
-                                // Rotazione lenta dell'icona ingranaggio
-                                return Transform.rotate(
-                                  angle:
-                                      _settingsIconAnimation.value *
-                                      2 *
-                                      math.pi,
-                                  child: Transform.scale(
-                                    scale: _isSettingsPressed ? 1.2 : 1.0,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            _isSettingsPressed
-                                                ? Colors.lightBlue.shade400
-                                                    .withOpacity(0.9)
-                                                : Colors.blue.shade900
-                                                    .withOpacity(0.7),
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color:
-                                                _isSettingsPressed
-                                                    ? Colors.lightBlue
-                                                        .withOpacity(0.8)
-                                                    : Colors.blue.withOpacity(
-                                                      0.5,
-                                                    ),
-                                            spreadRadius:
-                                                _isSettingsPressed ? 3 : 1,
-                                            blurRadius:
-                                                _isSettingsPressed ? 12 : 6,
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.settings,
-                                        color: Colors.white,
-                                        size: 22,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Area del personaggio animato
-                Expanded(
-                  flex: 3,
-                  child: Center(
-                    child: ScaleTransition(
-                      scale: _characterScaleAnimation,
-                      child: Hero(
-                        tag: 'character',
-                        child: Container(
-                          height: 250,
-                          width: 250,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.withOpacity(0.3),
-                                spreadRadius: 10,
-                                blurRadius: 20,
-                              ),
-                            ],
-                          ),
-                          child: Image.asset(
-                            characterAsset,
-                            errorBuilder: (context, error, stackTrace) {
-                              // Fallback se l'immagine non esiste
-                              return Container(
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.blue,
-                                ),
-                                child: const Icon(
-                                  Icons.fitness_center,
-                                  size: 120,
-                                  color: Colors.white,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.4),
+                      spreadRadius: 1,
+                      blurRadius: 8,
                     ),
-                  ),
+                  ],
                 ),
-
-                // Pulsanti azione con effetto illuminazione LED al click
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        // Pulsante Allenamento
-                        GestureDetector(
-                          onTapDown:
-                              (_) => setState(
-                                () => _isTrainingButtonPressed = true,
-                              ),
-                          onTapUp:
-                              (_) => setState(
-                                () => _isTrainingButtonPressed = false,
-                              ),
-                          onTapCancel:
-                              () => setState(
-                                () => _isTrainingButtonPressed = false,
-                              ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => const SchedaAllenamentoPage(),
-                              ),
-                            );
-                          },
-                          child: _buildLedButton(
-                            "ALLENAMENTO",
-                            "Inizia la tua avventura",
-                            Icons.fitness_center,
-                            _isTrainingButtonPressed,
-                          ),
-                        ),
-
-                        Row(
-                          children: [
-                            // Pulsante Statistiche
-                            Expanded(
-                              child: GestureDetector(
-                                onTapDown:
-                                    (_) => setState(
-                                      () => _isStatsButtonPressed = true,
-                                    ),
-                                onTapUp:
-                                    (_) => setState(
-                                      () => _isStatsButtonPressed = false,
-                                    ),
-                                onTapCancel:
-                                    () => setState(
-                                      () => _isStatsButtonPressed = false,
-                                    ),
-                                onTap: () {
-                                  // Navigazione alle statistiche
-                                },
-                                child: _buildLedButton(
-                                  "STATISTICHE",
-                                  "I tuoi progressi",
-                                  Icons.bar_chart,
-                                  _isStatsButtonPressed,
-                                  isSmall: true,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 15),
-                            // Pulsante Missioni
-                            Expanded(
-                              child: GestureDetector(
-                                onTapDown:
-                                    (_) => setState(
-                                      () => _isMissionsButtonPressed = true,
-                                    ),
-                                onTapUp:
-                                    (_) => setState(
-                                      () => _isMissionsButtonPressed = false,
-                                    ),
-                                onTapCancel:
-                                    () => setState(
-                                      () => _isMissionsButtonPressed = false,
-                                    ),
-                                onTap: () {
-                                  // Navigazione alle missioni
-                                },
-                                child: _buildLedButton(
-                                  "MISSIONI",
-                                  "Sfide giornaliere",
-                                  Icons.emoji_events,
-                                  _isMissionsButtonPressed,
-                                  isSmall: true,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                child: const Icon(
+                  Icons.fitness_center,
+                  color: Colors.white,
+                  size: 26,
                 ),
+              ),
+              label: 'Allenamento',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.emoji_events_outlined),
+              label: 'Missioni',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profilo',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                // Barra esperienza animata
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(30, 10, 30, 15),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "LIVELLO $userLevel",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            "${(expProgress * 100).toInt()}%",
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 5),
-                      Stack(
-                        children: [
-                          // Sfondo della barra
-                          Container(
-                            height: 15,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade800,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          // Progresso della barra
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              return AnimatedBuilder(
-                                animation: _experienceBarAnimation,
-                                builder: (context, child) {
-                                  return Container(
-                                    height: 15,
-                                    width: constraints.maxWidth * expProgress,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.blue,
-                                          Colors.purple,
-                                          Colors.blue,
-                                        ],
-                                        stops: [0.0, 0.5, 1.0],
-                                        begin: Alignment.centerLeft,
-                                        end: Alignment.centerRight,
-                                        transform: GradientRotation(
-                                          _experienceBarAnimation.value *
-                                              2 *
-                                              math.pi,
-                                        ),
-                                      ),
-                                      borderRadius: BorderRadius.circular(10),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.blue.withOpacity(
-                                            0.5 +
-                                                _experienceBarAnimation.value *
-                                                    0.2,
-                                          ),
-                                          spreadRadius: 1,
-                                          blurRadius: 6,
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+  /// Crea lo sfondo con gradiente
+  Widget _buildBackground() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.indigo.shade900, Colors.black],
+        ),
+      ),
+    );
+  }
+
+  /// Crea l'animazione del campo stellare di sfondo
+  Widget _buildStarfieldAnimation() {
+    return AnimatedBuilder(
+      animation: _particleAnimationController,
+      builder: (context, child) {
+        return CustomPaint(
+          painter: StarfieldPainter(
+            animation: _particleAnimationController.value,
+          ),
+          size: Size.infinite,
+        );
+      },
+    );
+  }
+
+  /// Costruisce il contenuto principale della home
+  Widget _buildMainContent() {
+    return SafeArea(
+      child: Column(
+        children: [
+          _buildHeader(),
+          _buildExperienceBar(),
+          _buildCharacterSection(),
+          _buildDailyChallenge(),
+        ],
+      ),
+    );
+  }
+
+  /// Costruisce l'header con nome utente, pulsante amici e livello
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 15, 20, 5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Nome utente
+          Text(
+            "${user.email?.split('@').first ?? 'Player'}",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              shadows: [
+                Shadow(
+                  blurRadius: 10.0,
+                  color: Colors.blue,
+                  offset: Offset(0, 0),
                 ),
               ],
             ),
+          ),
+
+          Row(
+            children: [
+              // Pulsante per accedere alla funzionalità amici
+              GestureDetector(
+                onTap: () {
+                  // Placeholder per la funzionalità amici
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Funzionalità amici in arrivo!'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.shade800,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.purple.withOpacity(0.4),
+                        spreadRadius: 1,
+                        blurRadius: 8,
+                        offset: const Offset(0, 0),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.people_alt_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ),
+              
+              // Badge di livello
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade800,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.5),
+                      spreadRadius: 1,
+                      blurRadius: 8,
+                      offset: const Offset(0, 0),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      "LV $userLevel",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  // Pulsante con effetto LED
-  Widget _buildLedButton(
-    String title,
-    String subtitle,
-    IconData icon,
-    bool isPressed, {
-    bool isSmall = false,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: isSmall ? 15 : 20,
-      ),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors:
-              isPressed
-                  ? [
-                    Colors.blue.shade500,
-                    Colors.purple.shade500,
-                  ] // Più luminoso quando premuto
-                  : [
-                    Colors.blue.shade800,
-                    Colors.purple.shade900,
-                  ], // Più scuro quando non premuto
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color:
-                isPressed
-                    ? Colors.blue.withOpacity(0.8) // Bagliore LED intenso
-                    : Colors.blue.withOpacity(0.2), // Leggero bagliore a riposo
-            spreadRadius: isPressed ? 3 : 0,
-            blurRadius: isPressed ? 15 : 5,
-            offset: const Offset(0, 0),
+  /// Costruisce la barra dell'esperienza animata
+  Widget _buildExperienceBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 5, 20, 20),
+      child: Stack(
+        children: [
+          // Sfondo della barra
+          Container(
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade800,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          // Indicatore di progresso animato
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return AnimatedBuilder(
+                animation: _experienceBarAnimation,
+                builder: (context, child) {
+                  return Container(
+                    height: 6,
+                    width: constraints.maxWidth * expProgress,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.blue,
+                          Colors.purple,
+                          Colors.blue,
+                        ],
+                        stops: const [0.0, 0.5, 1.0],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        transform: GradientRotation(
+                          _experienceBarAnimation.value * 2 * math.pi,
+                        ),
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(
+                            0.5 + _experienceBarAnimation.value * 0.2,
+                          ),
+                          spreadRadius: 1,
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
           ),
         ],
-        border: Border.all(
-          color:
-              isPressed
-                  ? Colors
-                      .lightBlueAccent // Bordo luminoso al click
-                  : Colors.transparent,
-          width: 1.5,
+      ),
+    );
+  }
+
+  /// Costruisce la sezione del personaggio animato
+  Widget _buildCharacterSection() {
+    return Expanded(
+      child: Center(
+        child: ScaleTransition(
+          scale: _characterScaleAnimation,
+          child: Hero(
+            tag: 'character',
+            child: Container(
+              height: 300,
+              width: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withOpacity(0.3),
+                    spreadRadius: 10,
+                    blurRadius: 20,
+                  ),
+                ],
+              ),
+              child: Image.asset(
+                characterAsset,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.blue,
+                    ),
+                    child: const Icon(
+                      Icons.fitness_center,
+                      size: 150,
+                      color: Colors.white,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
         ),
       ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: isPressed ? Colors.white : Colors.white.withOpacity(0.8),
-            size: isSmall ? 24 : 28,
+    );
+  }
+
+  /// Costruisce la card della sfida giornaliera con indicatore di progresso
+  Widget _buildDailyChallenge() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.blue.shade900.withOpacity(0.7),
+              Colors.purple.shade900.withOpacity(0.7),
+            ],
           ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.blue.withOpacity(0.2),
+              blurRadius: 10,
+              spreadRadius: 0,
+            ),
+          ],
+          border: Border.all(
+            color: Colors.white.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color:
-                        isPressed
-                            ? Colors.white
-                            : Colors.white.withOpacity(0.9),
-                    fontWeight: FontWeight.bold,
-                    fontSize: isSmall ? 14 : 18,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.notifications,
+                    color: Colors.amber,
+                    size: 22,
                   ),
                 ),
-                if (!isSmall)
-                  Text(
-                    subtitle,
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    "Sfida giornaliera",
                     style: TextStyle(
-                      color:
-                          isPressed
-                              ? Colors.white.withOpacity(0.9)
-                              : Colors.white70,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    "NUOVO",
+                    style: TextStyle(
+                      color: Colors.greenAccent,
+                      fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
                   ),
+                ),
               ],
             ),
-          ),
-          Icon(
-            Icons.arrow_forward_ios,
-            color: isPressed ? Colors.white : Colors.white70,
-            size: isSmall ? 16 : 18,
-          ),
-        ],
+            const SizedBox(height: 12),
+            const Text(
+              "Completa 3000 passi oggi",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: 0.4,
+                minHeight: 10,
+                backgroundColor: Colors.grey.shade800,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Colors.amber,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "1200/3000 passi",
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 13,
+              ),
+              textAlign: TextAlign.end,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class SlowStarfieldPainter extends CustomPainter {
+/// Painter personalizzato per l'effetto di sfondo stellato con movimento lento
+class StarfieldPainter extends CustomPainter {
   final double animation;
 
-  SlowStarfieldPainter({required this.animation});
+  StarfieldPainter({required this.animation});
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Disegno delle nebulose spaziali
     _drawNebulosities(canvas, size);
-
-    // Disegno delle stelle fisse con effetto brillante
     _drawTwinklingStars(canvas, size);
   }
 
+  /// Disegna nebulose colorate con movimento lento
   void _drawNebulosities(Canvas canvas, Size size) {
-    final seed = 12345; // Un seme costante per assicurare posizioni coerenti
+    final seed = 12345; // Seed costante per posizioni coerenti
     final random = math.Random(seed);
 
-    // Creiamo 3-4 nebulose che si muovono lentamente
+    // Crea 4 nebulose con movimento lento
     for (int i = 0; i < 4; i++) {
       final baseX = random.nextDouble() * size.width;
       final baseY = random.nextDouble() * size.height;
 
-      // Movimento molto lento
+      // Movimento lento
       final offsetX = math.sin(animation * 0.01 + i) * 20;
       final offsetY = math.cos(animation * 0.008 + i * 0.5) * 15;
 
       final x = (baseX + offsetX) % size.width;
       final y = (baseY + offsetY) % size.height;
 
-      // Dimensione della nebulosa
+      // Dimensione e colore
       final radius = 100.0 + random.nextDouble() * 150;
-
-      // Colore della nebulosa con opacità molto bassa
       final colors = [
         Colors.blue.withOpacity(0.03),
         Colors.purple.withOpacity(0.04),
         Colors.indigo.withOpacity(0.03),
         Colors.cyan.withOpacity(0.02),
       ];
-
       final color = colors[i % colors.length];
 
-      // Disegna la nebulosa come un gradiente radiale sfocato
+      // Applica gradiente radiale per effetto nebulosa
       final gradient = RadialGradient(
         center: Alignment.center,
         radius: 1.0,
@@ -729,31 +637,25 @@ class SlowStarfieldPainter extends CustomPainter {
     }
   }
 
+  /// Disegna stelle con effetto scintillante
   void _drawTwinklingStars(Canvas canvas, Size size) {
     final paint = Paint()..strokeCap = StrokeCap.round;
-    final seed = 54321; // Seme costante per le stelle
+    final seed = 54321; // Seed costante per le stelle
     final random = math.Random(seed);
 
-    // Disegna le stelle fisse con effetto brillante
+    // Crea 150 stelle con effetto scintillante indipendente
     for (int i = 0; i < 150; i++) {
       // Posizione fissa per ogni stella
       final x = random.nextDouble() * size.width;
       final y = random.nextDouble() * size.height;
 
-      // Dimensione variabile della stella
       final baseStarSize = 0.5 + random.nextDouble() * 1.5;
-
-      // Effetto brillante indipendente per ogni stella
-      final phase = random.nextDouble() * math.pi * 2; // Fase casuale
-      final twinkleSpeed =
-          0.2 + random.nextDouble() * 0.3; // Velocità brillantezza variabile
-      final twinkle =
-          0.4 + 0.6 * (0.5 + 0.5 * math.sin(animation * twinkleSpeed + phase));
-
-      // Dimensione che varia leggermente con l'effetto brillante
+      final phase = random.nextDouble() * math.pi * 2;
+      final twinkleSpeed = 0.2 + random.nextDouble() * 0.3;
+      final twinkle = 0.4 + 0.6 * (0.5 + 0.5 * math.sin(animation * twinkleSpeed + phase));
       final starSize = baseStarSize * (0.8 + 0.2 * twinkle);
 
-      // Colore della stella
+      // Varia colori delle stelle per effetto realistico
       Color starColor;
       final colorSeed = random.nextInt(100);
       if (colorSeed < 5) {
@@ -768,10 +670,10 @@ class SlowStarfieldPainter extends CustomPainter {
         starColor = Colors.white.withOpacity(0.3 * twinkle);
       }
 
-      // Disegna una stella con effetto brillante
+      // Disegna stella con effetto luminoso
       canvas.drawCircle(Offset(x, y), starSize, paint..color = starColor);
 
-      // Per alcune stelle, aggiunge un bagliore
+      // Aggiunge bagliore extra ad alcune stelle
       if (colorSeed < 20) {
         canvas.drawCircle(
           Offset(x, y),
@@ -783,6 +685,6 @@ class SlowStarfieldPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant SlowStarfieldPainter oldDelegate) =>
+  bool shouldRepaint(covariant StarfieldPainter oldDelegate) =>
       oldDelegate.animation != animation;
 }
