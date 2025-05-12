@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
 import 'pages/scheda_allenamento_page.dart';
+import 'pages/amici_page.dart';
 
 /// Widget principale della schermata Home dell'applicazione.
 /// Mostra il personaggio dell'utente, il suo livello, sfide giornaliere
@@ -20,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final int userLevel = 5;
   final double expProgress = 0.7;
   final String characterAsset = 'assets/character.png';
-  
+
   // Stato della navigazione
   int _selectedIndex = 0;
 
@@ -89,15 +90,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _profileIconAnimationController.dispose();
     super.dispose();
   }
-  
+
   /// Gestisce la navigazione quando viene selezionato un elemento della barra inferiore
   void _onNavItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    
+
     // Gestione della navigazione in base all'elemento selezionato
-    switch(index) {
+    switch (index) {
       case 0: // Home (già visualizzata)
         break;
       case 1: // Statistiche
@@ -289,17 +290,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ],
             ),
           ),
-
           Row(
             children: [
               // Pulsante per accedere alla funzionalità amici
               GestureDetector(
                 onTap: () {
-                  // Placeholder per la funzionalità amici
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Funzionalità amici in arrivo!'),
-                      duration: Duration(seconds: 2),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AmiciPage(),
                     ),
                   );
                 },
@@ -325,7 +324,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              
               // Badge di livello
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -583,108 +581,4 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 }
 
-/// Painter personalizzato per l'effetto di sfondo stellato con movimento lento
-class StarfieldPainter extends CustomPainter {
-  final double animation;
-
-  StarfieldPainter({required this.animation});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    _drawNebulosities(canvas, size);
-    _drawTwinklingStars(canvas, size);
-  }
-
-  /// Disegna nebulose colorate con movimento lento
-  void _drawNebulosities(Canvas canvas, Size size) {
-    final seed = 12345; // Seed costante per posizioni coerenti
-    final random = math.Random(seed);
-
-    // Crea 4 nebulose con movimento lento
-    for (int i = 0; i < 4; i++) {
-      final baseX = random.nextDouble() * size.width;
-      final baseY = random.nextDouble() * size.height;
-
-      // Movimento lento
-      final offsetX = math.sin(animation * 0.01 + i) * 20;
-      final offsetY = math.cos(animation * 0.008 + i * 0.5) * 15;
-
-      final x = (baseX + offsetX) % size.width;
-      final y = (baseY + offsetY) % size.height;
-
-      // Dimensione e colore
-      final radius = 100.0 + random.nextDouble() * 150;
-      final colors = [
-        Colors.blue.withOpacity(0.03),
-        Colors.purple.withOpacity(0.04),
-        Colors.indigo.withOpacity(0.03),
-        Colors.cyan.withOpacity(0.02),
-      ];
-      final color = colors[i % colors.length];
-
-      // Applica gradiente radiale per effetto nebulosa
-      final gradient = RadialGradient(
-        center: Alignment.center,
-        radius: 1.0,
-        colors: [color, color.withOpacity(0.0)],
-        stops: const [0.2, 1.0],
-      );
-
-      final rect = Rect.fromCircle(center: Offset(x, y), radius: radius);
-      final paint = Paint()..shader = gradient.createShader(rect);
-
-      canvas.drawCircle(Offset(x, y), radius, paint);
-    }
-  }
-
-  /// Disegna stelle con effetto scintillante
-  void _drawTwinklingStars(Canvas canvas, Size size) {
-    final paint = Paint()..strokeCap = StrokeCap.round;
-    final seed = 54321; // Seed costante per le stelle
-    final random = math.Random(seed);
-
-    // Crea 150 stelle con effetto scintillante indipendente
-    for (int i = 0; i < 150; i++) {
-      // Posizione fissa per ogni stella
-      final x = random.nextDouble() * size.width;
-      final y = random.nextDouble() * size.height;
-
-      final baseStarSize = 0.5 + random.nextDouble() * 1.5;
-      final phase = random.nextDouble() * math.pi * 2;
-      final twinkleSpeed = 0.2 + random.nextDouble() * 0.3;
-      final twinkle = 0.4 + 0.6 * (0.5 + 0.5 * math.sin(animation * twinkleSpeed + phase));
-      final starSize = baseStarSize * (0.8 + 0.2 * twinkle);
-
-      // Varia colori delle stelle per effetto realistico
-      Color starColor;
-      final colorSeed = random.nextInt(100);
-      if (colorSeed < 5) {
-        starColor = Colors.lightBlueAccent.withOpacity(0.6 * twinkle);
-      } else if (colorSeed < 10) {
-        starColor = Colors.purpleAccent.withOpacity(0.5 * twinkle);
-      } else if (colorSeed < 15) {
-        starColor = Colors.amberAccent.withOpacity(0.5 * twinkle);
-      } else if (colorSeed < 17) {
-        starColor = Colors.redAccent.withOpacity(0.4 * twinkle);
-      } else {
-        starColor = Colors.white.withOpacity(0.3 * twinkle);
-      }
-
-      // Disegna stella con effetto luminoso
-      canvas.drawCircle(Offset(x, y), starSize, paint..color = starColor);
-
-      // Aggiunge bagliore extra ad alcune stelle
-      if (colorSeed < 20) {
-        canvas.drawCircle(
-          Offset(x, y),
-          starSize * 2,
-          paint..color = starColor.withOpacity(0.1 * twinkle),
-        );
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant StarfieldPainter oldDelegate) =>
-      oldDelegate.animation != animation;
-}
+/// Painter personalizzato per l'effetto di sfondo stellato con movimento
