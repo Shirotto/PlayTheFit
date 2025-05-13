@@ -83,7 +83,18 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
             child: Column(
               children: [
                 const SizedBox(height: 20),
-                Image.asset('assets/images/logo.png', height: 80),
+                Image.asset(
+                  'assets/images/logo.png',
+                  height: 80,
+                  errorBuilder: (context, error, stackTrace) {
+                    // Mostra un'icona placeholder se il logo non viene caricato
+                    return Icon(
+                      Icons.rocket_launch, // Esempio di icona
+                      size: 80,
+                      color: Colors.white.withOpacity(0.7),
+                    );
+                  },
+                ),
                 const SizedBox(height: 20),
                 Expanded(
                   child: Container(

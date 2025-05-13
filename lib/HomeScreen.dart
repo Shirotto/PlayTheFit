@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
 import 'pages/scheda_allenamento_page.dart';
+import 'pages/profile_page.dart'; // Importa la nuova pagina del profilo
+import 'pages/statistiche_page.dart'; // Importa la pagina Statistiche
+import 'pages/missioni_page.dart'; // Importa la pagina Missioni
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,11 +25,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _characterAnimationController;
   late AnimationController _particleAnimationController;
   late AnimationController _experienceBarAnimationController;
-  // late AnimationController _profileIconAnimationController;
 
   late Animation<double> _characterScaleAnimation;
   late Animation<double> _experienceBarAnimation;
-  // late Animation<double> _profileIconAnimation;
 
   @override
   void initState() {
@@ -58,16 +59,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       begin: 0.0,
       end: 1.0,
     ).animate(_experienceBarAnimationController);
-
-    // _profileIconAnimationController = AnimationController(
-    //   vsync: this,
-    //   duration: const Duration(seconds: 3),
-    // )..repeat(reverse: true);
-
-    // _profileIconAnimation = Tween<double>(
-    //   begin: 0.0,
-    //   end: 1.0,
-    // ).animate(_profileIconAnimationController);
   }
 
   @override
@@ -75,7 +66,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _characterAnimationController.dispose();
     _particleAnimationController.dispose();
     _experienceBarAnimationController.dispose();
-    // _profileIconAnimationController?.dispose();
     super.dispose();
   }
 
@@ -83,29 +73,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       _selectedIndex = index;
     });
-
-    switch (index) {
-      case 0:
-        break;
-      case 1:
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const SchedaAllenamentoPage(),
-          ),
-        );
-        break;
-      case 3:
-        break;
-      case 4:
-        break;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> pageOptions = <Widget>[
+      _buildMainContent(), // Content for Home tab
+      const StatistichePage(),
+      const SchedaAllenamentoPage(),
+      const MissioniPage(),
+      const ProfilePage(),
+    ];
+
     return Scaffold(
       backgroundColor: Colors.black87,
       bottomNavigationBar: _buildNavigationBar(),
@@ -113,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         children: [
           _buildBackground(),
           _buildStarfieldAnimation(),
-          _buildMainContent(),
+          IndexedStack(index: _selectedIndex, children: pageOptions),
         ],
       ),
     );

@@ -36,7 +36,16 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: Login(),
+      initialRoute:
+          '/', // Opzionale: definisci una rotta iniziale se necessario
+      routes: {
+        '/':
+            (context) =>
+                Login(), // La rotta di default punta alla pagina di Login
+        '/login':
+            (context) => Login(), // Definisce la rotta per la pagina di Login
+        // Aggiungi qui altre rotte nominate se necessario
+      },
     );
   }
 }
