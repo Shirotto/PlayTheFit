@@ -3,9 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
 import 'pages/scheda_allenamento_page.dart';
 
-/// Widget principale della schermata Home dell'applicazione.
-/// Mostra il personaggio dell'utente, il suo livello, sfide giornaliere
-/// e fornisce accesso alle funzionalità principali dell'app.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -16,29 +13,25 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final User user = FirebaseAuth.instance.currentUser!;
 
-  // Configurazione del sistema di progressione
   final int userLevel = 5;
   final double expProgress = 0.7;
   final String characterAsset = 'assets/character.png';
-  
-  // Stato della navigazione
+
   int _selectedIndex = 0;
 
-  // Controllers per le animazioni
   late AnimationController _characterAnimationController;
   late AnimationController _particleAnimationController;
   late AnimationController _experienceBarAnimationController;
-  late AnimationController _profileIconAnimationController;
+  // late AnimationController _profileIconAnimationController;
 
   late Animation<double> _characterScaleAnimation;
   late Animation<double> _experienceBarAnimation;
-  late Animation<double> _profileIconAnimation;
+  // late Animation<double> _profileIconAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    // Inizializza animazione "respiro" del personaggio
     _characterAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -51,13 +44,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
 
-    // Inizializza animazione dello sfondo stellato
     _particleAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 60),
     )..repeat();
 
-    // Inizializza animazione per la barra esperienza
     _experienceBarAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -68,42 +59,37 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       end: 1.0,
     ).animate(_experienceBarAnimationController);
 
-    // Inizializza animazione per l'icona profilo
-    _profileIconAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    )..repeat(reverse: true);
+    // _profileIconAnimationController = AnimationController(
+    //   vsync: this,
+    //   duration: const Duration(seconds: 3),
+    // )..repeat(reverse: true);
 
-    _profileIconAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(_profileIconAnimationController);
+    // _profileIconAnimation = Tween<double>(
+    //   begin: 0.0,
+    //   end: 1.0,
+    // ).animate(_profileIconAnimationController);
   }
 
   @override
   void dispose() {
-    // Rilascia tutte le risorse delle animazioni
     _characterAnimationController.dispose();
     _particleAnimationController.dispose();
     _experienceBarAnimationController.dispose();
-    _profileIconAnimationController.dispose();
+    // _profileIconAnimationController?.dispose();
     super.dispose();
   }
-  
-  /// Gestisce la navigazione quando viene selezionato un elemento della barra inferiore
+
   void _onNavItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    
-    // Gestione della navigazione in base all'elemento selezionato
-    switch(index) {
-      case 0: // Home (già visualizzata)
+
+    switch (index) {
+      case 0:
         break;
-      case 1: // Statistiche
-        // TODO: Implementare navigazione alle statistiche
+      case 1:
         break;
-      case 2: // Allenamento
+      case 2:
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -111,11 +97,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         );
         break;
-      case 3: // Missioni
-        // TODO: Implementare navigazione alle missioni
+      case 3:
         break;
-      case 4: // Profilo
-        // TODO: Implementare navigazione al profilo
+      case 4:
         break;
     }
   }
@@ -135,7 +119,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  /// Costruisce la barra di navigazione inferiore con pulsante centrale evidenziato
   Widget _buildNavigationBar() {
     return Container(
       decoration: BoxDecoration(
@@ -170,9 +153,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             fontWeight: FontWeight.bold,
             fontSize: 12,
           ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 11,
-          ),
+          unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: [
             const BottomNavigationBarItem(
               icon: Icon(Icons.home_rounded),
@@ -182,7 +163,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               icon: Icon(Icons.bar_chart),
               label: 'Statistiche',
             ),
-            // Pulsante centrale più grande e prominente
             BottomNavigationBarItem(
               icon: Container(
                 height: 56,
@@ -224,7 +204,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  /// Crea lo sfondo con gradiente
   Widget _buildBackground() {
     return Container(
       decoration: BoxDecoration(
@@ -237,7 +216,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  /// Crea l'animazione del campo stellare di sfondo
   Widget _buildStarfieldAnimation() {
     return AnimatedBuilder(
       animation: _particleAnimationController,
@@ -252,7 +230,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  /// Costruisce il contenuto principale della home
   Widget _buildMainContent() {
     return SafeArea(
       child: Column(
@@ -266,14 +243,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  /// Costruisce l'header con nome utente, pulsante amici e livello
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 15, 20, 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Nome utente
           Text(
             "${user.email?.split('@').first ?? 'Player'}",
             style: const TextStyle(
@@ -289,13 +264,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ],
             ),
           ),
-
           Row(
             children: [
-              // Pulsante per accedere alla funzionalità amici
               GestureDetector(
                 onTap: () {
-                  // Placeholder per la funzionalità amici
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Funzionalità amici in arrivo!'),
@@ -325,8 +297,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              
-              // Badge di livello
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -346,11 +316,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: 20,
-                    ),
+                    const Icon(Icons.star, color: Colors.amber, size: 20),
                     const SizedBox(width: 4),
                     Text(
                       "LV $userLevel",
@@ -369,13 +335,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  /// Costruisce la barra dell'esperienza animata
   Widget _buildExperienceBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 5, 20, 20),
       child: Stack(
         children: [
-          // Sfondo della barra
           Container(
             height: 6,
             decoration: BoxDecoration(
@@ -383,7 +347,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          // Indicatore di progresso animato
           LayoutBuilder(
             builder: (context, constraints) {
               return AnimatedBuilder(
@@ -394,11 +357,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     width: constraints.maxWidth * expProgress,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          Colors.blue,
-                          Colors.purple,
-                          Colors.blue,
-                        ],
+                        colors: [Colors.blue, Colors.purple, Colors.blue],
                         stops: const [0.0, 0.5, 1.0],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
@@ -427,7 +386,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  /// Costruisce la sezione del personaggio animato
   Widget _buildCharacterSection() {
     return Expanded(
       child: Center(
@@ -471,7 +429,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  /// Costruisce la card della sfida giornaliera con indicatore di progresso
   Widget _buildDailyChallenge() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
@@ -494,10 +451,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               spreadRadius: 0,
             ),
           ],
-          border: Border.all(
-            color: Colors.white.withOpacity(0.1),
-            width: 1,
-          ),
+          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -550,10 +504,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             const SizedBox(height: 12),
             const Text(
               "Completa 3000 passi oggi",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 15),
             ),
             const SizedBox(height: 12),
             ClipRRect(
@@ -562,18 +513,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 value: 0.4,
                 minHeight: 10,
                 backgroundColor: Colors.grey.shade800,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Colors.amber,
-                ),
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
               ),
             ),
             const SizedBox(height: 8),
             const Text(
               "1200/3000 passi",
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: Colors.white70, fontSize: 13),
               textAlign: TextAlign.end,
             ),
           ],
@@ -583,7 +529,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 }
 
-/// Painter personalizzato per l'effetto di sfondo stellato con movimento lento
 class StarfieldPainter extends CustomPainter {
   final double animation;
 
@@ -595,24 +540,20 @@ class StarfieldPainter extends CustomPainter {
     _drawTwinklingStars(canvas, size);
   }
 
-  /// Disegna nebulose colorate con movimento lento
   void _drawNebulosities(Canvas canvas, Size size) {
-    final seed = 12345; // Seed costante per posizioni coerenti
+    final seed = 12345;
     final random = math.Random(seed);
 
-    // Crea 4 nebulose con movimento lento
     for (int i = 0; i < 4; i++) {
       final baseX = random.nextDouble() * size.width;
       final baseY = random.nextDouble() * size.height;
 
-      // Movimento lento
       final offsetX = math.sin(animation * 0.01 + i) * 20;
       final offsetY = math.cos(animation * 0.008 + i * 0.5) * 15;
 
       final x = (baseX + offsetX) % size.width;
       final y = (baseY + offsetY) % size.height;
 
-      // Dimensione e colore
       final radius = 100.0 + random.nextDouble() * 150;
       final colors = [
         Colors.blue.withOpacity(0.03),
@@ -622,7 +563,6 @@ class StarfieldPainter extends CustomPainter {
       ];
       final color = colors[i % colors.length];
 
-      // Applica gradiente radiale per effetto nebulosa
       final gradient = RadialGradient(
         center: Alignment.center,
         radius: 1.0,
@@ -637,25 +577,22 @@ class StarfieldPainter extends CustomPainter {
     }
   }
 
-  /// Disegna stelle con effetto scintillante
   void _drawTwinklingStars(Canvas canvas, Size size) {
     final paint = Paint()..strokeCap = StrokeCap.round;
-    final seed = 54321; // Seed costante per le stelle
+    final seed = 54321;
     final random = math.Random(seed);
 
-    // Crea 150 stelle con effetto scintillante indipendente
     for (int i = 0; i < 150; i++) {
-      // Posizione fissa per ogni stella
       final x = random.nextDouble() * size.width;
       final y = random.nextDouble() * size.height;
 
       final baseStarSize = 0.5 + random.nextDouble() * 1.5;
       final phase = random.nextDouble() * math.pi * 2;
       final twinkleSpeed = 0.2 + random.nextDouble() * 0.3;
-      final twinkle = 0.4 + 0.6 * (0.5 + 0.5 * math.sin(animation * twinkleSpeed + phase));
+      final twinkle =
+          0.4 + 0.6 * (0.5 + 0.5 * math.sin(animation * twinkleSpeed + phase));
       final starSize = baseStarSize * (0.8 + 0.2 * twinkle);
 
-      // Varia colori delle stelle per effetto realistico
       Color starColor;
       final colorSeed = random.nextInt(100);
       if (colorSeed < 5) {
@@ -670,10 +607,8 @@ class StarfieldPainter extends CustomPainter {
         starColor = Colors.white.withOpacity(0.3 * twinkle);
       }
 
-      // Disegna stella con effetto luminoso
       canvas.drawCircle(Offset(x, y), starSize, paint..color = starColor);
 
-      // Aggiunge bagliore extra ad alcune stelle
       if (colorSeed < 20) {
         canvas.drawCircle(
           Offset(x, y),

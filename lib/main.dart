@@ -1,24 +1,16 @@
 import 'package:flutter/material.dart';
-// Assicurati che il percorso sia corretto per la tua struttura di cartelle
 import 'package:playthefit/pages/login.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'theme/app_theme.dart';
 
 void main() async {
-  // 1. Rendi la funzione main 'async'
-
-  // 2. Assicurati che i binding di Flutter siano inizializzati
-  //    Questo è NECESSARIO se chiami initializeApp PRIMA di runApp
+  // Inizializzazione dei binding di Flutter
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 3. Inizializza Firebase usando le opzioni per la piattaforma corrente
+  // Inizializzazione di Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // 4. Ora puoi eseguire la tua app
-  runApp(
-    const MyApp(),
-  ); // Sostituisci MyApp con il nome della tua widget principale
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -28,12 +20,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: const Color(0xFF0D47A1), // Deep blue
+        primaryColor: const Color(0xFF0D47A1), // Blu profondo
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF0D47A1),
-          secondary: const Color(0xFF42A5F5), // Lighter blue for accents
+          secondary: const Color(0xFF42A5F5), // Blu chiaro per accenti
         ),
-        fontFamily: 'Poppins', // You'll need to add this font
+        fontFamily: 'Poppins',
         useMaterial3: true,
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(

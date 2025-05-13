@@ -3,13 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math' as math;
 
-// Componenti personalizzati
+// Import componenti
 import '../Components/Heading.dart';
 import '../Components/card_button.dart';
 import '../Components/custom_container.dart';
 import '../Components/social_media_icons.dart';
-
-// Schermata di destinazione dopo login/registrazione
 import '../HomeScreen.dart';
 
 class Login extends StatefulWidget {
@@ -20,7 +18,6 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
-  // Cambiato a false per mostrare la schermata di login per prima
   bool signup = false;
 
   final TextEditingController nameController = TextEditingController();
@@ -86,12 +83,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
             child: Column(
               children: [
                 const SizedBox(height: 20),
-                Image.asset(
-                  'assets/images/logo.png',
-                  height: 80,
-                  // Se non hai un logo, commenta questa riga o sostituisci con:
-                  // errorBuilder: (context, error, stackTrace) => Icon(Icons.fitness_center, size: 80, color: Colors.white),
-                ),
+                Image.asset('assets/images/logo.png', height: 80),
                 const SizedBox(height: 20),
                 Expanded(
                   child: Container(
@@ -342,14 +334,12 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
     );
   }
 
-  // Cambia tra login e registrazione
   void toggleAuthMode() {
     setState(() {
       signup = !signup;
     });
   }
 
-  // Funzione di registrazione - rimasta invariata
   Future<void> _signUp() async {
     try {
       UserCredential userCredential = await _auth
@@ -377,7 +367,6 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
     }
   }
 
-  // Funzione di login - rimasta invariata
   Future<void> _signIn() async {
     try {
       await _auth.signInWithEmailAndPassword(
@@ -409,7 +398,6 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
   }
 }
 
-// Riuso del painter delle stelle dalle altre pagine
 class SlowStarfieldPainter extends CustomPainter {
   final double animation;
 
@@ -417,33 +405,30 @@ class SlowStarfieldPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Disegno delle nebulose spaziali
     _drawNebulosities(canvas, size);
-
-    // Disegno delle stelle fisse con effetto brillante
     _drawTwinklingStars(canvas, size);
   }
 
+  // Disegna le nebulose animandone la posizione
   void _drawNebulosities(Canvas canvas, Size size) {
-    final seed = 12345; // Un seme costante per assicurare posizioni coerenti
+    final seed = 12345; // Seme fisso per la generazione casuale
     final random = math.Random(seed);
 
-    // Creiamo 3-4 nebulose che si muovono lentamente
     for (int i = 0; i < 4; i++) {
+      // Posizione base della nebulosa
       final baseX = random.nextDouble() * size.width;
       final baseY = random.nextDouble() * size.height;
 
-      // Movimento molto lento
+      // Offset animato per simulare il movimento
       final offsetX = math.sin(animation * 0.01 + i) * 20;
       final offsetY = math.cos(animation * 0.008 + i * 0.5) * 15;
 
       final x = (baseX + offsetX) % size.width;
       final y = (baseY + offsetY) % size.height;
 
-      // Dimensione della nebulosa
-      final radius = 100.0 + random.nextDouble() * 150;
+      final radius = 100.0 + random.nextDouble() * 150; // Raggio casuale
 
-      // Colore della nebulosa con opacità molto bassa
+      // Colori per le nebulose
       final colors = [
         Colors.blue.withOpacity(0.03),
         Colors.purple.withOpacity(0.04),
@@ -453,7 +438,7 @@ class SlowStarfieldPainter extends CustomPainter {
 
       final color = colors[i % colors.length];
 
-      // Disegna la nebulosa come un gradiente radiale sfocato
+      // Gradiente radiale per l'effetto nebulosa
       final gradient = RadialGradient(
         center: Alignment.center,
         radius: 1.0,
@@ -468,31 +453,32 @@ class SlowStarfieldPainter extends CustomPainter {
     }
   }
 
+  // Disegna le stelle con effetto scintillante
   void _drawTwinklingStars(Canvas canvas, Size size) {
     final paint = Paint()..strokeCap = StrokeCap.round;
-    final seed = 54321; // Seme costante per le stelle
+    final seed = 54321; // Seme fisso per la generazione casuale
     final random = math.Random(seed);
 
-    // Disegna le stelle fisse con effetto brillante
     for (int i = 0; i < 150; i++) {
       // Posizione fissa per ogni stella
       final x = random.nextDouble() * size.width;
       final y = random.nextDouble() * size.height;
 
-      // Dimensione variabile della stella
+      // Dimensione base della stella
       final baseStarSize = 0.5 + random.nextDouble() * 1.5;
 
-      // Effetto brillante indipendente per ogni stella
-      final phase = random.nextDouble() * math.pi * 2; // Fase casuale
+      // Calcola l'effetto scintillante
+      final phase =
+          random.nextDouble() * math.pi * 2; // Fase casuale per ogni stella
       final twinkleSpeed =
-          0.2 + random.nextDouble() * 0.3; // Velocità brillantezza variabile
+          0.2 + random.nextDouble() * 0.3; // Velocità di scintillio variabile
       final twinkle =
           0.4 + 0.6 * (0.5 + 0.5 * math.sin(animation * twinkleSpeed + phase));
 
-      // Dimensione che varia leggermente con l'effetto brillante
+      // Dimensione finale della stella (base * scintillio)
       final starSize = baseStarSize * (0.8 + 0.2 * twinkle);
 
-      // Colore della stella
+      // Determina il colore della stella
       Color starColor;
       final colorSeed = random.nextInt(100);
       if (colorSeed < 5) {
@@ -507,15 +493,18 @@ class SlowStarfieldPainter extends CustomPainter {
         starColor = Colors.white.withOpacity(0.3 * twinkle);
       }
 
-      // Disegna una stella con effetto brillante
+      // Disegna la stella
       canvas.drawCircle(Offset(x, y), starSize, paint..color = starColor);
 
-      // Per alcune stelle, aggiunge un bagliore
+      // Aggiunge un effetto di bagliore ad alcune stelle
       if (colorSeed < 20) {
         canvas.drawCircle(
           Offset(x, y),
-          starSize * 2,
-          paint..color = starColor.withOpacity(0.1 * twinkle),
+          starSize * 2, // Raggio del bagliore più grande
+          paint
+            ..color = starColor.withOpacity(
+              0.1 * twinkle,
+            ), // Bagliore più tenue
         );
       }
     }
