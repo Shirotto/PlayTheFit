@@ -99,14 +99,16 @@ class Friend {
     this.isOnline = false,
     this.lastOnline,
   });
-
   factory Friend.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Friend(
       id: doc.id,
-      userId: data['userId'] as String,
-      username: data['username'] as String,
-      addedAt: (data['addedAt'] as Timestamp).toDate(),
+      userId: data['userId'] as String? ?? '',
+      username: data['username'] as String? ?? 'Utente',
+      addedAt:
+          data['addedAt'] != null
+              ? (data['addedAt'] as Timestamp).toDate()
+              : DateTime.now(),
       isOnline: false, // Lo stato online verrà aggiornato separatamente
       lastOnline: null, // Lo stato online verrà aggiornato separatamente
     );

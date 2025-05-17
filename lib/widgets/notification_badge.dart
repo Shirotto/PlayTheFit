@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/friendship_service.dart';
+import '../models/notification.dart';
 
 class NotificationBadge extends StatefulWidget {
   final Widget child;
@@ -23,22 +24,40 @@ class _NotificationBadgeState extends State<NotificationBadge> {
   final FriendshipService _friendshipService = FriendshipService();
 
   @override
+  void initState() {
+    super.initState();
+    // Verificare se ci sono notifiche non lette all'avvio
+    _checkUnreadNotifications();
+  }
+
+  // Metodo per controllare se ci sono notifiche non lette
+  void _checkUnreadNotifications() async {
+    final notifications =
+        await _friendshipService.getUnreadNotifications().first;
+    if (notifications.isNotEmpty && mounted) {
+      print('Ci sono ${notifications.length} notifiche non lette');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<dynamic>>(
+    return StreamBuilder<List<UserNotification>>(
       stream: _friendshipService.getUnreadNotifications(),
       builder: (context, snapshot) {
         final hasUnread =
             snapshot.hasData && (snapshot.data?.isNotEmpty ?? false);
         final count = snapshot.data?.length ?? 0;
 
+        // Debug print per verificare la ricezione delle notifiche
+        if (hasUnread) {
+          print('Notifiche non lette: $count');
+        }
+
         return Stack(
           alignment: Alignment.topRight,
           clipBehavior: Clip.none,
           children: [
-            GestureDetector(
-              onTap: hasUnread && widget.onTap != null ? widget.onTap : null,
-              child: widget.child,
-            ),
+            GestureDetector(onTap: widget.onTap, child: widget.child),
             if (hasUnread)
               Positioned(
                 right: widget.offset,
@@ -46,20 +65,20 @@ class _NotificationBadgeState extends State<NotificationBadge> {
                 child: Container(
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
-                    color: widget.badgeColor,
+                    color: Colors.red,
                     shape: count > 9 ? BoxShape.rectangle : BoxShape.circle,
                     borderRadius: count > 9 ? BorderRadius.circular(7) : null,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.red.shade800.withOpacity(0.5),
+                        color: Colors.red.shade800.withOpacity(0.7),
                         blurRadius: 5,
-                        spreadRadius: 0,
+                        spreadRadius: 1,
                       ),
                     ],
                   ),
                   constraints: const BoxConstraints(
-                    minWidth: 16,
-                    minHeight: 16,
+                    minWidth: 18,
+                    minHeight: 18,
                   ),
                   child: Center(
                     child: Text(
@@ -78,5 +97,12 @@ class _NotificationBadgeState extends State<NotificationBadge> {
         );
       },
     );
+  }
+
+  // Verifica se il badge è visibile o meno
+  Future<bool> isBadgeVisible() async {
+    final notifications =
+        await _friendshipService.getUnreadNotifications().first;
+    return notifications.isNotEmpty;
   }
 }

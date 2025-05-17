@@ -105,8 +105,15 @@ class NotificationService {
             _channel.name,
             channelDescription: _channel.description,
             icon: '@mipmap/ic_launcher',
+            importance: Importance.high,
+            priority: Priority.high,
+            showWhen: true,
           ),
-          iOS: const DarwinNotificationDetails(),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
         payload: message.data.toString(),
       );

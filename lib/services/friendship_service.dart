@@ -221,9 +221,27 @@ class FriendshipService {
           final friends = <Friend>[];
 
           for (var doc in snapshot.docs) {
-            final friend = Friend.fromFirestore(
-              doc as DocumentSnapshot<Map<String, dynamic>>,
-            );
+            Friend friend;
+            try {
+              friend = Friend.fromFirestore(
+                doc as DocumentSnapshot<Map<String, dynamic>>,
+              );
+            } catch (e) {
+              // Se c'è un errore nel formato, crea un Friend con i dati di base
+              final data = doc.data() as Map<String, dynamic>;
+              friend = Friend(
+                id: doc.id,
+                userId: data['userId'] as String? ?? '',
+                username: data['username'] as String? ?? 'Utente',
+                addedAt:
+                    data['addedAt'] != null
+                        ? (data['addedAt'] as Timestamp).toDate()
+                        : DateTime.now(),
+              );
+              print(
+                'Recuperato amico con formato alternativo: ${friend.username}',
+              );
+            }
 
             // Ottieni le informazioni sullo stato online dell'amico
             try {

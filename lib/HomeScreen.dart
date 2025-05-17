@@ -285,8 +285,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     size: 22,
                   ),
                 ),
-              ),
-              // Pulsante Notifiche
+              ), // Pulsante Notifiche
               NotificationBadge(
                 onTap: () {
                   Navigator.push(
@@ -294,7 +293,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     MaterialPageRoute(
                       builder: (context) => const NotificationsPage(),
                     ),
-                  );
+                  ).then((_) {
+                    // Aggiorna lo stato dopo aver chiuso la pagina delle notifiche
+                    setState(() {});
+                  });
                 },
                 child: Container(
                   padding: const EdgeInsets.all(10),
