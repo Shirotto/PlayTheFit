@@ -77,58 +77,10 @@ class FirestoreSetupService {
     }
   }
 
-  // Funzione per creare alcuni utenti di esempio per i test
+  // Funzione per creare alcuni utenti di esempio per i test - disabilitata
   Future<void> createSampleUsers() async {
-    try {
-      final usersCollection = _firestore.collection('users');
-
-      // Aggiungi alcuni utenti di esempio (solo se non esistono già)
-      final List<Map<String, dynamic>> sampleUsers = [
-        {
-          'id': 'sample1',
-          'username': 'MarioRossi',
-          'email': 'mario.rossi@example.com',
-        },
-        {
-          'id': 'sample2',
-          'username': 'LuigiBianchi',
-          'email': 'luigi.bianchi@example.com',
-        },
-        {
-          'id': 'sample3',
-          'username': 'GiuliaVerdi',
-          'email': 'giulia.verdi@example.com',
-        },
-        {
-          'id': 'sample4',
-          'username': 'SaraNeri',
-          'email': 'sara.neri@example.com',
-        },
-      ];
-
-      for (var user in sampleUsers) {
-        final docRef = usersCollection.doc(user['id']);
-        final docSnapshot = await docRef.get();
-
-        if (!docSnapshot.exists) {
-          await docRef.set({
-            'username': user['username'],
-            'email': user['email'],
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-
-          // Crea le sottocollezioni iniziali
-          await docRef.collection('friends').doc('placeholder').set({
-            'placeholder': true,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-        }
-      }
-
-      print('Sample users created successfully');
-    } catch (e) {
-      print('Error creating sample users: $e');
-    }
+    // Questa funzione è stata disabilitata per non creare utenti di esempio
+    print('Sample user creation has been disabled');
   }
 
   // Funzione per migrare da un modello di dati vecchio a quello nuovo

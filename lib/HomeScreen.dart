@@ -7,6 +7,7 @@ import 'pages/statistiche_page.dart';
 import 'pages/missioni_page.dart';
 import 'pages/amici_page.dart';
 import 'pages/notifications_page.dart';
+import 'pages/chat_list_page.dart';
 import 'widgets/notification_badge.dart'; // Aggiunto import per NotificationBadge
 
 class HomeScreen extends StatefulWidget {
@@ -253,6 +254,39 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
           Row(
             children: [
+              // Pulsante Chat
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ChatListPage(),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.shade800,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.teal.withOpacity(0.4),
+                        spreadRadius: 1,
+                        blurRadius: 8,
+                        offset: const Offset(0, 0),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.chat_bubble_outline,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ),
+              // Pulsante Notifiche
               NotificationBadge(
                 onTap: () {
                   Navigator.push(

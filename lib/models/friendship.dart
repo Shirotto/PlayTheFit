@@ -88,12 +88,16 @@ class Friend {
   final String userId;
   final String username;
   final DateTime addedAt;
+  bool isOnline;
+  DateTime? lastOnline;
 
   Friend({
     required this.id,
     required this.userId,
     required this.username,
     required this.addedAt,
+    this.isOnline = false,
+    this.lastOnline,
   });
 
   factory Friend.fromFirestore(DocumentSnapshot doc) {
@@ -103,6 +107,8 @@ class Friend {
       userId: data['userId'] as String,
       username: data['username'] as String,
       addedAt: (data['addedAt'] as Timestamp).toDate(),
+      isOnline: false, // Lo stato online verrà aggiornato separatamente
+      lastOnline: null, // Lo stato online verrà aggiornato separatamente
     );
   }
 

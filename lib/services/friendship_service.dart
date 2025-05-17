@@ -2,10 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/notification.dart';
 import '../models/friendship.dart';
+import 'notification_service.dart';
 
 class FriendshipService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final NotificationService _notificationService = NotificationService();
 
   // Collezioni
   CollectionReference get _usersCollection => _firestore.collection('users');
@@ -97,8 +99,20 @@ class FriendshipService {
         type: NotificationType.friendRequest,
         createdAt: DateTime.now(),
       );
-
       await _notificationsCollection.add(notification.toMap());
+
+      // Invia una notifica push all'utente destinatario
+      await _notificationService.sendNotificationToUser(
+        userId: targetUserId,
+        title: 'Nuova richiesta di amicizia',
+        body: '$currentUsername ti ha inviato una richiesta di amicizia',
+        data: {
+          'type': 'friendRequest',
+          'fromUserId': currentUser!.uid,
+          'fromUserName': currentUsername,
+          'requestId': docRef.id,
+        },
+      );
 
       return true;
     } catch (e) {
@@ -170,8 +184,20 @@ class FriendshipService {
           type: NotificationType.friendAccepted,
           createdAt: DateTime.now(),
         );
-
         await _notificationsCollection.add(notification.toMap());
+
+        // Invia una notifica push all'utente mittente della richiesta
+        await _notificationService.sendNotificationToUser(
+          userId: request.fromUserId,
+          title: 'Richiesta di amicizia accettata',
+          body:
+              '${request.toUserName} ha accettato la tua richiesta di amicizia',
+          data: {
+            'type': 'friendAccepted',
+            'fromUserId': currentUser!.uid,
+            'fromUserName': request.toUserName,
+          },
+        );
       }
 
       return true;
@@ -181,7 +207,7 @@ class FriendshipService {
     }
   }
 
-  // Ottiene la lista degli amici
+  // Ottiene la lista degli amici con lo stato online
   Stream<List<Friend>> getFriends() {
     if (currentUser == null) {
       return Stream.value([]);
@@ -191,14 +217,37 @@ class FriendshipService {
         .doc(currentUser!.uid)
         .collection('friends')
         .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map(
-                (doc) => Friend.fromFirestore(
-                  doc as DocumentSnapshot<Map<String, dynamic>>,
-                ),
-              )
-              .toList();
+        .asyncMap((snapshot) async {
+          final friends = <Friend>[];
+
+          for (var doc in snapshot.docs) {
+            final friend = Friend.fromFirestore(
+              doc as DocumentSnapshot<Map<String, dynamic>>,
+            );
+
+            // Ottieni le informazioni sullo stato online dell'amico
+            try {
+              final userDoc = await _usersCollection.doc(friend.userId).get();
+              if (userDoc.exists) {
+                final userData = userDoc.data() as Map<String, dynamic>?;
+                if (userData != null) {
+                  friend.isOnline = userData['isOnline'] as bool? ?? false;
+                  final lastOnlineTimestamp =
+                      userData['lastOnline'] as Timestamp?;
+                  if (lastOnlineTimestamp != null) {
+                    friend.lastOnline = lastOnlineTimestamp.toDate();
+                  }
+                }
+              }
+            } catch (e) {
+              // Ignora errori nella lettura dello stato online
+              print('Errore nel recuperare lo stato online: $e');
+            }
+
+            friends.add(friend);
+          }
+
+          return friends;
         });
   }
 

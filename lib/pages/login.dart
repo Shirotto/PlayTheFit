@@ -9,6 +9,7 @@ import '../Components/card_button.dart';
 import '../Components/custom_container.dart';
 import '../Components/social_media_icons.dart';
 import '../HomeScreen.dart';
+import '../services/auth_service.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -23,7 +24,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
+  final AuthService _authService = AuthService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -182,13 +183,13 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                 if (signup)
                                   _buildTextField(
                                     nameController,
-                                    "Nome",
+                                    "Username",
                                     Icons.person,
                                   ),
                                 _buildTextField(
                                   emailController,
-                                  "Email",
-                                  Icons.email,
+                                  signup ? "Email" : "Username",
+                                  signup ? Icons.email : Icons.person,
                                 ),
                                 _buildTextField(
                                   passwordController,
@@ -353,26 +354,42 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
 
   Future<void> _signUp() async {
     try {
-      UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(
-            email: emailController.text.trim(),
-            password: passwordController.text.trim(),
-          );
+      if (nameController.text.trim().isEmpty) {
+        showError("Inserisci un username");
+        return;
+      }
+      if (emailController.text.trim().isEmpty) {
+        showError("Inserisci un'email");
+        return;
+      }
+      if (passwordController.text.trim().isEmpty) {
+        showError("Inserisci una password");
+        return;
+      }
 
-      await _firestore.collection("users").doc(userCredential.user?.uid).set({
-        "name": nameController.text.trim(),
-        "email": emailController.text.trim(),
-        "createdAt": FieldValue.serverTimestamp(),
-      });
+      await _authService.registerWithEmailAndPassword(
+        username: nameController.text.trim(),
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
 
       nameController.clear();
       emailController.clear();
       passwordController.clear();
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      // Mostra messaggio di successo
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Registrazione completata con successo!"),
+          backgroundColor: Colors.green.shade800,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
+
+      // Passa alla modalità di login
+      setState(() {
+        signup = false;
+      });
     } on FirebaseAuthException catch (e) {
       showError(e.message ?? "Errore durante la registrazione");
     }
@@ -380,8 +397,9 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
 
   Future<void> _signIn() async {
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
+      // Utilizza il nuovo metodo che supporta sia username che email
+      await _authService.loginWithUsernameOrEmail(
+        usernameOrEmail: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 

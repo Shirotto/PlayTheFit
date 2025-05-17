@@ -139,15 +139,35 @@ class _AmiciPageState extends State<AmiciPage>
               margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
               elevation: 2,
               child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Colors.purple.shade400,
-                  child: Text(
-                    friend.username.substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                leading: Stack(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.purple.shade400,
+                      child: Text(
+                        friend.username.substring(0, 1).toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 15,
+                        height: 15,
+                        decoration: BoxDecoration(
+                          color: friend.isOnline ? Colors.green : Colors.grey,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.grey.shade900,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 title: Text(
                   friend.username,
@@ -156,6 +176,18 @@ class _AmiciPageState extends State<AmiciPage>
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                subtitle:
+                    friend.isOnline
+                        ? const Text(
+                          'Online',
+                          style: TextStyle(color: Colors.green),
+                        )
+                        : friend.lastOnline != null
+                        ? Text(
+                          'Ultimo accesso: ${_formatLastSeen(friend.lastOnline!)}',
+                          style: const TextStyle(color: Colors.grey),
+                        )
+                        : null,
                 trailing: IconButton(
                   icon: const Icon(Icons.person_remove, color: Colors.red),
                   onPressed: () => _showRemoveFriendDialog(friend),
@@ -542,6 +574,23 @@ class _AmiciPageState extends State<AmiciPage>
           ),
         );
       }
+    }
+  }
+
+  String _formatLastSeen(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 1) {
+      return "Poco fa";
+    } else if (difference.inHours < 1) {
+      return "${difference.inMinutes} min fa";
+    } else if (difference.inDays < 1) {
+      return "${difference.inHours} ore fa";
+    } else if (difference.inDays < 7) {
+      return "${difference.inDays} giorni fa";
+    } else {
+      return "${dateTime.day}/${dateTime.month}/${dateTime.year}";
     }
   }
 
