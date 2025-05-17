@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:playthefit/pages/login.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'services/firestore_setup_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -9,6 +11,12 @@ void main() async {
 
   // Inizializzazione di Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Inizializza il sistema di amicizie se l'utente è già autenticato
+  final currentUser = FirebaseAuth.instance.currentUser;
+  if (currentUser != null) {
+    await FirestoreSetupService().initializeSystem();
+  }
 
   runApp(const MyApp());
 }

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
 import 'pages/scheda_allenamento_page.dart';
-import 'pages/profile_page.dart'; // Importa la nuova pagina del profilo
-import 'pages/statistiche_page.dart'; // Importa la pagina Statistiche
-import 'pages/missioni_page.dart'; // Importa la pagina Missioni
+import 'pages/profile_page.dart';
+import 'pages/statistiche_page.dart';
+import 'pages/missioni_page.dart';
+import 'pages/amici_page.dart';
+import 'pages/notifications_page.dart';
+import 'widgets/notification_badge.dart'; // Aggiunto import per NotificationBadge
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,10 +24,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final String characterAsset = 'assets/character.png';
 
   int _selectedIndex = 0;
-
   late AnimationController _characterAnimationController;
   late AnimationController _particleAnimationController;
   late AnimationController _experienceBarAnimationController;
+  late AnimationController _profileIconAnimationController;
 
   late Animation<double> _characterScaleAnimation;
   late Animation<double> _experienceBarAnimation;
@@ -54,11 +57,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
-
     _experienceBarAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(_experienceBarAnimationController);
+    // Inizializza animazione per l'icona profilo
+    _profileIconAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
   }
 
   @override
@@ -66,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _characterAnimationController.dispose();
     _particleAnimationController.dispose();
     _experienceBarAnimationController.dispose();
+    _profileIconAnimationController.dispose();
     super.dispose();
   }
 
@@ -245,13 +253,42 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
           Row(
             children: [
+              NotificationBadge(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationsPage(),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade800,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.amber.withOpacity(0.4),
+                        spreadRadius: 1,
+                        blurRadius: 8,
+                        offset: const Offset(0, 0),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.notifications_active,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ),
               GestureDetector(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Funzionalità amici in arrivo!'),
-                      duration: Duration(seconds: 2),
-                    ),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AmiciPage()),
                   );
                 },
                 child: Container(
