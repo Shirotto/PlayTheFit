@@ -130,9 +130,7 @@ class ChatService {
     final batch = _firestore.batch();
     for (var doc in unreadMessages.docs) {
       batch.update(doc.reference, {'isRead': true});
-    }
-
-    // Aggiorna lo stato della chat
+    } // Aggiorna lo stato della chat
     batch.update(_chatsCollection.doc(chatId), {'hasUnreadMessages': false});
 
     // Esegui le operazioni in batch
@@ -143,13 +141,30 @@ class ChatService {
   Stream<List<Chat>> getUserChats() {
     if (currentUser == null) return Stream.value([]);
 
-    return _chatsCollection
-        .where('participantIds', arrayContains: currentUser!.uid)
-        .orderBy('lastMessageTime', descending: true)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) => Chat.fromFirestore(doc)).toList();
-        });
+    try {
+      // Prima eseguiamo una query più semplice che non richiede indici complessi
+      return _chatsCollection
+          .where('participantIds', arrayContains: currentUser!.uid)
+          .snapshots()
+          .handleError((error) {
+            print('Errore nel recupero delle chat: $error');
+            // In caso di errore, ritorna un elenco vuoto
+            return [];
+          })
+          .map((snapshot) {
+            var chats =
+                snapshot.docs.map((doc) => Chat.fromFirestore(doc)).toList();
+            // Poi ordiniamo i risultati manualmente
+            chats.sort(
+              (a, b) => b.lastMessageTime.compareTo(a.lastMessageTime),
+            );
+            return chats;
+          });
+    } catch (e) {
+      print('Eccezione nel recupero delle chat: $e');
+      // In caso di eccezione, ritorna uno stream con lista vuota
+      return Stream.value([]);
+    }
   }
 
   // Ottieni i messaggi di una chat

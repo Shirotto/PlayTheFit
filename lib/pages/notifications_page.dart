@@ -3,6 +3,7 @@ import '../models/notification.dart';
 import '../services/friendship_service.dart';
 import '../models/friendship.dart';
 import 'package:intl/intl.dart';
+import 'amici_page.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -13,12 +14,13 @@ class NotificationsPage extends StatefulWidget {
 
 class _NotificationsPageState extends State<NotificationsPage> {
   final FriendshipService _friendshipService = FriendshipService();
-
   @override
   void initState() {
     super.initState();
     // Segna tutte le notifiche come lette quando la pagina viene aperta
+    // ma non le elimina
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Le notifiche verranno semplicemente segnate come lette
       _friendshipService.markAllNotificationsAsRead();
     });
   }
@@ -102,36 +104,98 @@ class _NotificationsPageState extends State<NotificationsPage> {
         break;
     }
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.grey.shade900,
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-      elevation: 2,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        leading: CircleAvatar(
-          backgroundColor: iconColor.withOpacity(0.2),
-          child: Icon(notificationIcon, color: iconColor),
-        ),
-        title: Text(
-          notification.message,
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight:
-                notification.isRead ? FontWeight.normal : FontWeight.bold,
+    return Dismissible(
+      key: Key(notification.id),
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20.0),
+        color: Colors.red,
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                backgroundColor: Colors.grey[900],
+                title: const Text(
+                  'Eliminare notifica?',
+                  style: TextStyle(color: Colors.white),
+                ),
+                content: const Text(
+                  'Sei sicuro di voler eliminare questa notifica?',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Annulla'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text(
+                      'Elimina',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
+              ),
+        );
+      },
+      onDismissed: (direction) async {
+        await _friendshipService.deleteNotification(notification.id);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Notifica eliminata')));
+      },
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: Colors.grey.shade900,
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        elevation: 2,
+        child: ListTile(
+          onTap:
+              notification.type == NotificationType.friendRequest
+                  ? () {
+                    // Naviga alla pagina degli amici sulla tab delle richieste
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => const AmiciPage(initialTabIndex: 1),
+                      ),
+                    );
+                  }
+                  : null,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 8,
+            horizontal: 16,
           ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            formattedDate,
-            style: const TextStyle(color: Colors.white60, fontSize: 12),
+          leading: CircleAvatar(
+            backgroundColor: iconColor.withOpacity(0.2),
+            child: Icon(notificationIcon, color: iconColor),
           ),
+          title: Text(
+            notification.message,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight:
+                  notification.isRead ? FontWeight.normal : FontWeight.bold,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              formattedDate,
+              style: const TextStyle(color: Colors.white60, fontSize: 12),
+            ),
+          ),
+          trailing:
+              notification.type == NotificationType.friendRequest
+                  ? _buildFriendRequestActions(notification)
+                  : null,
         ),
-        trailing:
-            notification.type == NotificationType.friendRequest
-                ? _buildFriendRequestActions(notification)
-                : null,
       ),
     );
   }

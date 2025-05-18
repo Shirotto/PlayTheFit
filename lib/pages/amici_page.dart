@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import '../models/friendship.dart';
 import '../services/friendship_service.dart';
+import '../services/chat_service.dart';
+import 'chat_detail_page.dart';
+import 'package:intl/intl.dart';
 
 class AmiciPage extends StatefulWidget {
-  const AmiciPage({super.key});
+  final int initialTabIndex;
+
+  const AmiciPage({super.key, this.initialTabIndex = 0});
 
   @override
   State<AmiciPage> createState() => _AmiciPageState();
@@ -17,11 +22,14 @@ class _AmiciPageState extends State<AmiciPage>
 
   List<Map<String, dynamic>> _searchResults = [];
   bool _isSearching = false;
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTabIndex,
+    );
   }
 
   @override
@@ -188,10 +196,8 @@ class _AmiciPageState extends State<AmiciPage>
                           style: const TextStyle(color: Colors.grey),
                         )
                         : null,
-                trailing: IconButton(
-                  icon: const Icon(Icons.person_remove, color: Colors.red),
-                  onPressed: () => _showRemoveFriendDialog(friend),
-                ),
+                trailing: null,
+                onTap: () => _showFriendProfile(friend),
               ),
             );
           },
@@ -577,29 +583,211 @@ class _AmiciPageState extends State<AmiciPage>
     }
   }
 
-  String _formatLastSeen(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
+  // Mostra un dialog con le opzioni per l'amico
+  void _showFriendOptionsDialog(Friend friend) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.grey.shade900,
+            title: Text(
+              friend.username,
+              style: const TextStyle(color: Colors.white),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.person, color: Colors.blue),
+                  title: const Text(
+                    'Visualizza profilo',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showFriendProfile(friend);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.chat, color: Colors.green),
+                  title: const Text(
+                    'Invia messaggio',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _navigateToChat(friend);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text(
+                    'Rimuovi amico',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showRemoveFriendDialog(friend);
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Chiudi'),
+              ),
+            ],
+          ),
+    );
+  }
 
-    if (difference.inMinutes < 1) {
-      return "Poco fa";
-    } else if (difference.inHours < 1) {
-      return "${difference.inMinutes} min fa";
-    } else if (difference.inDays < 1) {
-      return "${difference.inHours} ore fa";
-    } else if (difference.inDays < 7) {
-      return "${difference.inDays} giorni fa";
-    } else {
-      return "${dateTime.day}/${dateTime.month}/${dateTime.year}";
+  // Mostra il profilo dell'amico
+  void _showFriendProfile(Friend friend) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            backgroundColor: Colors.grey.shade900,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.purple.shade400,
+                    child: Text(
+                      friend.username.substring(0, 1).toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 40,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    friend.username,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: friend.isOnline ? Colors.green : Colors.grey,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      friend.isOnline ? 'Online' : 'Offline',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Amici da: ${_formatDateTime(friend.addedAt)}',
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.chat),
+                        label: const Text('Messaggio'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _navigateToChat(friend);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.delete),
+                        label: const Text('Rimuovi'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showRemoveFriendDialog(friend);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  // Naviga alla chat con l'amico
+  void _navigateToChat(Friend friend) async {
+    // Ottieni il servizio chat
+    final chatService = ChatService();
+
+    // Mostra indicatore di caricamento
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
+    try {
+      // Ottieni o crea l'ID della chat
+      final chatId = await chatService.getChatId(friend.userId);
+
+      // Chiudi l'indicatore di caricamento
+      Navigator.pop(context);
+
+      // Naviga alla pagina della chat
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => ChatDetailPage(
+                chatId: chatId,
+                receiverId: friend.userId,
+                receiverName: friend.username,
+              ),
+        ),
+      );
+    } catch (e) {
+      // Chiudi l'indicatore di caricamento in caso di errore
+      Navigator.pop(context);
+      // Mostra un messaggio di errore
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore nell\'aprire la chat: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
+  // Mostra dialog di conferma per rimuovere un amico
   void _showRemoveFriendDialog(Friend friend) {
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: Colors.grey[900],
+            backgroundColor: Colors.grey.shade900,
             title: const Text(
               'Rimuovere amico?',
               style: TextStyle(color: Colors.white),
@@ -614,14 +802,14 @@ class _AmiciPageState extends State<AmiciPage>
                 child: const Text('Annulla'),
               ),
               TextButton(
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
                 onPressed: () async {
                   Navigator.pop(context);
                   final success = await _friendshipService.removeFriend(
                     friend.id,
                     friend.userId,
                   );
-
-                  if (mounted && success) {
+                  if (success && mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -631,13 +819,33 @@ class _AmiciPageState extends State<AmiciPage>
                     );
                   }
                 },
-                child: const Text(
-                  'Conferma',
-                  style: TextStyle(color: Colors.red),
-                ),
+                child: const Text('Rimuovi'),
               ),
             ],
           ),
     );
+  }
+
+  // Formatta la data e ora per l'ultimo accesso
+  String _formatLastSeen(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inSeconds < 60) {
+      return 'adesso';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} min fa';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} ore fa';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} giorni fa';
+    } else {
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    }
+  }
+
+  // Formatta una data per la visualizzazione
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
   }
 }

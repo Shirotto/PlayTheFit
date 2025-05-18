@@ -22,7 +22,6 @@ class NotificationBadge extends StatefulWidget {
 
 class _NotificationBadgeState extends State<NotificationBadge> {
   final FriendshipService _friendshipService = FriendshipService();
-
   @override
   void initState() {
     super.initState();
@@ -39,6 +38,13 @@ class _NotificationBadgeState extends State<NotificationBadge> {
     }
   }
 
+  // Restituisce il numero di notifiche non lette
+  Future<int> getUnreadCount() async {
+    final notifications =
+        await _friendshipService.getUnreadNotifications().first;
+    return notifications.length;
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<UserNotification>>(
@@ -52,7 +58,6 @@ class _NotificationBadgeState extends State<NotificationBadge> {
         if (hasUnread) {
           print('Notifiche non lette: $count');
         }
-
         return Stack(
           alignment: Alignment.topRight,
           clipBehavior: Clip.none,
@@ -62,15 +67,17 @@ class _NotificationBadgeState extends State<NotificationBadge> {
               Positioned(
                 right: widget.offset,
                 top: widget.offset,
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.elasticOut,
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
-                    color: Colors.red,
+                    color: widget.badgeColor,
                     shape: count > 9 ? BoxShape.rectangle : BoxShape.circle,
                     borderRadius: count > 9 ? BorderRadius.circular(7) : null,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.red.shade800.withOpacity(0.7),
+                        color: widget.badgeColor.withOpacity(0.7),
                         blurRadius: 5,
                         spreadRadius: 1,
                       ),

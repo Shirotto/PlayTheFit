@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:playthefit/pages/login.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'services/firestore_setup_service.dart';
 import 'services/notification_service.dart';
 import 'firebase_options.dart';
@@ -12,6 +13,16 @@ void main() async {
 
   // Inizializzazione di Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Abilita la persistenza offline per Firestore
+  try {
+    await FirebaseFirestore.instance.enablePersistence(
+      const PersistenceSettings(synchronizeTabs: true),
+    );
+    print('Persistenza Firestore abilitata con successo');
+  } catch (e) {
+    print('Errore nell\'abilitare la persistenza: $e');
+  }
 
   // Inizializza il sistema di notifiche
   await NotificationService().init();

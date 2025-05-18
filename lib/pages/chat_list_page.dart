@@ -16,52 +16,156 @@ class _ChatListPageState extends State<ChatListPage> {
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
 
+  // Lista per memorizzare le chat in cache locale
+  List<Chat> _cachedChats = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Carica le chat una volta quando la pagina viene aperta
+    _loadChats();
+  }
+
+  // Metodo per caricare le chat e memorizzarle in cache
+  void _loadChats() async {
+    try {
+      _chatService.getUserChats().listen((chats) {
+        if (chats.isNotEmpty) {
+          setState(() {
+            _cachedChats = chats;
+          });
+        }
+      });
+    } catch (e) {
+      print('Errore nel caricare le chat: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chat'),
         backgroundColor: Colors.purple.shade800,
+        actions: [
+          // Aggiungi un pulsante di refresh per ricaricare le chat
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Aggiorna',
+            onPressed: () {
+              setState(() {}); // Forza il ricaricamento del widget
+            },
+          ),
+        ],
       ),
       backgroundColor: Colors.black87,
       body: StreamBuilder<List<Chat>>(
         stream: _chatService.getUserChats(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              _cachedChats.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final chats = snapshot.data ?? [];
-          final currentUserId = _authService.currentUser?.uid;
+          // Se abbiamo un errore ma abbiamo dati in cache, mostriamo quelli
+          if (snapshot.hasError) {
+            if (_cachedChats.isNotEmpty) {
+              // Usa la cache e mostra un messaggio
+              final chats = _cachedChats;
+              final currentUserId = _authService.currentUser?.uid;
 
+              return Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    color: Colors.amber.withOpacity(0.3),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning, color: Colors.amber),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: const Text(
+                            'Visualizzando chat in modalità offline. Alcune conversazioni potrebbero non essere aggiornate.',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.refresh, color: Colors.white),
+                          onPressed: () => setState(() {}),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(child: _buildChatList(chats, currentUserId!)),
+                ],
+              );
+            } else {
+              // Se non abbiamo cache, mostra l'errore
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 60,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Errore nel caricamento delle chat',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed:
+                          () => setState(() {
+                            _loadChats();
+                          }),
+                      child: const Text('Riprova'),
+                    ),
+                  ],
+                ),
+              );
+            }
+          }
+
+          // Aggiorna la cache quando abbiamo nuovi dati
+          final chats = snapshot.data ?? [];
+          if (chats.isNotEmpty) {
+            _cachedChats = List.from(chats);
+          }
+
+          final currentUserId = _authService.currentUser?.uid;
           if (chats.isEmpty) {
             return _buildEmptyState();
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(8),
-            itemCount: chats.length,
-            itemBuilder: (context, index) {
-              final chat = chats[index];
-              final otherUserName = chat.getOtherParticipantName(
-                currentUserId!,
-              );
-              final otherUserId = chat.getOtherParticipantId(currentUserId);
-              final isUnread =
-                  chat.hasUnreadMessages &&
-                  chat.lastMessageSenderId != currentUserId;
-
-              return _buildChatItem(
-                context,
-                chat,
-                otherUserName,
-                otherUserId,
-                isUnread,
-              );
-            },
-          );
+          return _buildChatList(chats, currentUserId!);
         },
       ),
+    );
+  }
+
+  // Metodo per costruire la lista delle chat
+  Widget _buildChatList(List<Chat> chats, String currentUserId) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: chats.length,
+      itemBuilder: (context, index) {
+        final chat = chats[index];
+        final otherUserName = chat.getOtherParticipantName(currentUserId);
+        final otherUserId = chat.getOtherParticipantId(currentUserId);
+        final isUnread =
+            chat.hasUnreadMessages && chat.lastMessageSenderId != currentUserId;
+
+        return _buildChatItem(
+          context,
+          chat,
+          otherUserName,
+          otherUserId,
+          isUnread,
+        );
+      },
     );
   }
 

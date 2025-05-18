@@ -70,6 +70,18 @@ class FriendshipService {
         return false; // Richiesta già inviata
       }
 
+      // Verifica se sono già amici (controllo reciproco)
+      final alreadyFriends =
+          await _usersCollection
+              .doc(currentUser!.uid)
+              .collection('friends')
+              .where('userId', isEqualTo: targetUserId)
+              .get();
+
+      if (alreadyFriends.docs.isNotEmpty) {
+        return false; // Sono già amici
+      }
+
       // Ottiene il nome dell'utente corrente
       final currentUserDoc = await _usersCollection.doc(currentUser!.uid).get();
       final currentUserData = currentUserDoc.data() as Map<String, dynamic>?;
@@ -419,6 +431,19 @@ class FriendshipService {
       return true;
     } catch (e) {
       print('Errore nella rimozione dell\'amico: $e');
+      return false;
+    }
+  }
+
+  // Elimina una notifica
+  Future<bool> deleteNotification(String notificationId) async {
+    try {
+      if (currentUser == null) return false;
+
+      await _notificationsCollection.doc(notificationId).delete();
+      return true;
+    } catch (e) {
+      print('Errore nell\'eliminare la notifica: $e');
       return false;
     }
   }
