@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/esercizio.dart';
 import '../Components/esercizio_card.dart';
+import '../HomeScreen.dart'; // Assicurati di importare la HomeScreen
 
 class SchedaAllenamentoPage extends StatefulWidget {
-  const SchedaAllenamentoPage({super.key});
+  final String schedaId;
+  const SchedaAllenamentoPage({super.key, required this.schedaId});
 
   @override
   State<SchedaAllenamentoPage> createState() => _SchedaAllenamentoPageState();
@@ -12,16 +16,15 @@ class SchedaAllenamentoPage extends StatefulWidget {
 
 class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
     with SingleTickerProviderStateMixin {
-  List<Esercizio> esercizi = [
-    Esercizio("Panca Piana", 4, 10, "60kg", "90s", true),
-    Esercizio("Trazioni", 3, 8, "Corpo", "120s", false),
-  ];
+  List<Esercizio> esercizi = [];
 
   late AnimationController _particleAnimationController;
 
   @override
   void initState() {
     super.initState();
+    caricaScheda();
+    caricaScheda();
     // Impostazione identica a HomeScreen: un minuto per ciclo
     _particleAnimationController = AnimationController(
       vsync: this,
@@ -39,11 +42,42 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
     setState(() {
       esercizi[index].completato = !esercizi[index].completato;
     });
+    salvaEserciziSuFirestore();
   }
 
   void eliminaEsercizio(int index) {
     setState(() {
       esercizi.removeAt(index);
+    });
+    salvaEserciziSuFirestore();
+  }
+
+  
+  Future<void> caricaScheda() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('schede')
+        .doc(widget.schedaId)
+        .collection('esercizi')
+        .get();
+
+    final eserciziCaricati = snapshot.docs.map((doc) {
+      final data = doc.data();
+      return Esercizio(
+        data['nome'],
+        data['serie'],
+        data['ripetizioni'],
+        data['peso'],
+        data['recupero'],
+        data['completato'] ?? false,
+      );
+    }).toList();
+
+    setState(() {
+      esercizi = eserciziCaricati;
     });
   }
 
@@ -135,7 +169,7 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
                       esercizi[index] = nuovo;
                     }
                   });
-
+                  salvaEserciziSuFirestore();
                   Navigator.pop(context);
                 },
                 child: const Text("Salva"),
@@ -184,6 +218,15 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              (route) => false,
+            );
+          },
+        ),
         title: Text(
           "Scheda di Allenamento",
           style: TextStyle(
@@ -195,8 +238,9 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
         actions: [
           IconButton(
             icon: const Icon(Icons.save, color: Colors.white),
-            onPressed: () {
-              // Salva la scheda
+            onPressed: () async {
+              await salvaEserciziSuFirestore();
+
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: const Text("Scheda salvata!"),
@@ -357,7 +401,7 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
             ),
           ],
         ),
-      ),
+      )
     );
   }
 
@@ -421,6 +465,34 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
         ),
       ),
     );
+  }
+
+  Future<void> salvaEserciziSuFirestore() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final eserciziRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('schede')
+        .doc(widget.schedaId)
+        .collection('esercizi');
+
+    // Cancella tutti gli esercizi esistenti
+    final snapshot = await eserciziRef.get();
+    for (var doc in snapshot.docs) {
+      await doc.reference.delete();
+    }
+
+    // Aggiungi gli esercizi attuali
+    for (var esercizio in esercizi) {
+      await eserciziRef.add({
+        'nome': esercizio.nome,
+        'serie': esercizio.serie,
+        'ripetizioni': esercizio.ripetizioni,
+        'peso': esercizio.peso,
+        'recupero': esercizio.recupero,
+        'completato': esercizio.completato,
+      });
+    }
   }
 }
 

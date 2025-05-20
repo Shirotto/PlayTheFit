@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pages/scheda_allenamento_page.dart';
 import 'pages/profile_page.dart'; // Importa la nuova pagina del profilo
 import 'pages/statistiche_page.dart'; // Importa la pagina Statistiche
 import 'pages/missioni_page.dart'; // Importa la pagina Missioni
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialTab;
+  const HomeScreen({super.key, this.initialTab = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -20,7 +22,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final double expProgress = 0.7;
   final String characterAsset = 'assets/character.png';
 
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+  String? schedaId;
 
   late AnimationController _characterAnimationController;
   late AnimationController _particleAnimationController;
@@ -29,9 +32,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late Animation<double> _characterScaleAnimation;
   late Animation<double> _experienceBarAnimation;
 
+  
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialTab;
+
+    _caricaSchedaId();
 
     _characterAnimationController = AnimationController(
       vsync: this,
@@ -61,6 +68,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     ).animate(_experienceBarAnimationController);
   }
 
+  Future<void> _caricaSchedaId() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final snap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('schede')
+        .orderBy('data_creazione')
+        .limit(1)
+        .get();
+
+    if (snap.docs.isNotEmpty) {
+      setState(() {
+        schedaId = snap.docs.first.id;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _characterAnimationController.dispose();
@@ -77,10 +101,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    Widget allenamentoTab() {
+  if (schedaId == null) {
+    return const Center(child: CircularProgressIndicator());
+  }
+  return SchedaAllenamentoPage(schedaId: schedaId!);
+}
+
     final List<Widget> pageOptions = <Widget>[
       _buildMainContent(), // Content for Home tab
       const StatistichePage(),
-      const SchedaAllenamentoPage(),
+      allenamentoTab(),
       const MissioniPage(),
       const ProfilePage(),
     ];

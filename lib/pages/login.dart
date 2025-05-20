@@ -8,7 +8,8 @@ import '../Components/Heading.dart';
 import '../Components/card_button.dart';
 import '../Components/custom_container.dart';
 import '../Components/social_media_icons.dart';
-import '../HomeScreen.dart';
+import 'scheda_allenamento_page.dart';
+import '../HomeScreen.dart'; // Assicurati di importare la HomeScreen
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -28,6 +29,36 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   late AnimationController _animationController;
+
+  Future<void> creaSchedaPerNuovoUtente(User user) async {
+    final schedaRef = _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('schede')
+        .doc();
+
+    await schedaRef.set({
+      'nome': 'Scheda Allenamento',
+      'data_creazione': FieldValue.serverTimestamp(),
+    });
+  }
+
+  
+  Future<String?> ottieniPrimaScheda(String uid) async {
+    final schedeSnap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('schede')
+        .orderBy('data_creazione')
+        .limit(1)
+        .get();
+
+    if (schedeSnap.docs.isNotEmpty) {
+      return schedeSnap.docs.first.id;
+    }
+    return null;
+  }
+
 
   @override
   void initState() {
@@ -369,9 +400,11 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
       emailController.clear();
       passwordController.clear();
 
+      await creaSchedaPerNuovoUtente(userCredential.user!);
+      final schedaId = await ottieniPrimaScheda(userCredential.user!.uid);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => SchedaAllenamentoPage(schedaId: schedaId!)),
       );
     } on FirebaseAuthException catch (e) {
       showError(e.message ?? "Errore durante la registrazione");
@@ -380,7 +413,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
 
   Future<void> _signIn() async {
     try {
-      await _auth.signInWithEmailAndPassword(
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
@@ -388,6 +421,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
       emailController.clear();
       passwordController.clear();
 
+      // Porta l'utente alla HomeScreen invece che alla SchedaAllenamentoPage
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -478,7 +512,7 @@ class SlowStarfieldPainter extends CustomPainter {
       // Dimensione base della stella
       final baseStarSize = 0.5 + random.nextDouble() * 1.5;
 
-      // Calcola l'effetto scintillante
+      // Calcola l'effetto scintillino
       final phase =
           random.nextDouble() * math.pi * 2; // Fase casuale per ogni stella
       final twinkleSpeed =
