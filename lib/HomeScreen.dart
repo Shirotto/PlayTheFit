@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math' as math;
 import 'pages/scheda_allenamento_page.dart';
 import 'pages/profile_page.dart';
@@ -8,10 +9,11 @@ import 'pages/missioni_page.dart';
 import 'pages/amici_page.dart';
 import 'pages/notifications_page.dart';
 import 'pages/chat_list_page.dart';
-import 'widgets/notification_badge.dart'; // Aggiunto import per NotificationBadge
+import 'widgets/notification_badge.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialTab;
+  const HomeScreen({super.key, this.initialTab = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -24,7 +26,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final double expProgress = 0.7;
   final String characterAsset = 'assets/character.png';
 
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+  String? schedaId;
+
   late AnimationController _characterAnimationController;
   late AnimationController _particleAnimationController;
   late AnimationController _experienceBarAnimationController;
@@ -36,6 +40,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialTab;
+    _caricaSchedaId();
 
     _characterAnimationController = AnimationController(
       vsync: this,
@@ -58,15 +64,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
+
     _experienceBarAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(_experienceBarAnimationController);
-    // Inizializza animazione per l'icona profilo
+
     _profileIconAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
+  }
+
+  Future<void> _caricaSchedaId() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final snap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('schede')
+        .orderBy('data_creazione')
+        .limit(1)
+        .get();
+
+    if (snap.docs.isNotEmpty) {
+      setState(() {
+        schedaId = snap.docs.first.id;
+      });
+    }
   }
 
   @override
@@ -86,10 +110,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    Widget allenamentoTab() {
+      if (schedaId == null) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      return SchedaAllenamentoPage(schedaId: schedaId!);
+    }
+
     final List<Widget> pageOptions = <Widget>[
-      _buildMainContent(), // Content for Home tab
+      _buildMainContent(),
       const StatistichePage(),
-      const SchedaAllenamentoPage(),
+      allenamentoTab(),
       const MissioniPage(),
       const ProfilePage(),
     ];
@@ -285,7 +316,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     size: 22,
                   ),
                 ),
-              ), // Pulsante Notifiche
+              ),
+              // Pulsante Notifiche con badge
               NotificationBadge(
                 onTap: () {
                   Navigator.push(
@@ -294,7 +326,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       builder: (context) => const NotificationsPage(),
                     ),
                   ).then((_) {
-                    // Aggiorna lo stato dopo aver chiuso la pagina delle notifiche
                     setState(() {});
                   });
                 },
@@ -320,6 +351,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ),
               ),
+              // Pulsante Amici
               GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -349,6 +381,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ),
               ),
+              // Livello utente
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,

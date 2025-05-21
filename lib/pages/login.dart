@@ -10,6 +10,7 @@ import '../Components/custom_container.dart';
 import '../Components/social_media_icons.dart';
 import '../HomeScreen.dart';
 import '../services/auth_service.dart';
+import 'scheda_allenamento_page.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -352,6 +353,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
     });
   }
 
+  // --- Merge: Registrazione con creazione scheda allenamento ---
   Future<void> _signUp() async {
     try {
       if (nameController.text.trim().isEmpty) {
@@ -367,11 +369,16 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
         return;
       }
 
-      await _authService.registerWithEmailAndPassword(
+      // Usa AuthService per la registrazione
+      UserCredential userCredential = await _authService.registerWithEmailAndPassword(
         username: nameController.text.trim(),
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
+
+      // Crea la scheda allenamento per il nuovo utente
+      await creaSchedaPerNuovoUtente(userCredential.user!);
+      final schedaId = await ottieniPrimaScheda(userCredential.user!.uid);
 
       nameController.clear();
       emailController.clear();
@@ -386,10 +393,11 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
         ),
       );
 
-      // Passa alla modalità di login
-      setState(() {
-        signup = false;
-      });
+      // Vai direttamente alla pagina della scheda allenamento
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => SchedaAllenamentoPage(schedaId: schedaId!)),
+      );
     } on FirebaseAuthException catch (e) {
       showError(e.message ?? "Errore durante la registrazione");
     }
@@ -424,6 +432,35 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
+  }
+
+  // --- Merge: Funzioni per la scheda allenamento ---
+  Future<void> creaSchedaPerNuovoUtente(User user) async {
+    final schedaRef = _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('schede')
+        .doc();
+
+    await schedaRef.set({
+      'nome': 'Scheda Allenamento',
+      'data_creazione': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<String?> ottieniPrimaScheda(String uid) async {
+    final schedeSnap = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('schede')
+        .orderBy('data_creazione')
+        .limit(1)
+        .get();
+
+    if (schedeSnap.docs.isNotEmpty) {
+      return schedeSnap.docs.first.id;
+    }
+    return null;
   }
 }
 
