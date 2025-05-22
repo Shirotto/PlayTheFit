@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'signup.dart'; 
+import 'pages/signup.dart'; 
 /*questa classe mi serve per visualizzare
 la pagina sul browser*/
 void main() {

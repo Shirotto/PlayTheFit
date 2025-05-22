@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'HomeScreen.dart'; // Assicurati che il path sia corretto
+import 'home_screen.dart'; // Assicurati che il path sia corretto
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});

@@ -4,11 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math' as math;
 
 // Import componenti
-import '../Components/Heading.dart';
+import '../Components/heading.dart';
 import '../Components/card_button.dart';
 import '../Components/custom_container.dart';
 import '../Components/social_media_icons.dart';
-import '../HomeScreen.dart';
+import 'home_screen.dart';
 import '../services/auth_service.dart';
 import 'scheda_allenamento_page.dart';
 

@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math' as math;
-import 'pages/scheda_allenamento_page.dart';
-import 'pages/profile_page.dart';
-import 'pages/statistiche_page.dart';
-import 'pages/missioni_page.dart';
-import 'pages/amici_page.dart';
-import 'pages/notifications_page.dart';
-import 'pages/chat_list_page.dart';
-import 'widgets/notification_badge.dart';
+import 'scheda_allenamento_page.dart';
+import 'profile_page.dart';
+import 'statistiche_page.dart';
+import 'missioni_page.dart';
+import 'amici_page.dart';
+import 'notifications_page.dart';
+import 'chat_list_page.dart';
+import '../widgets/notification_badge.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialTab;

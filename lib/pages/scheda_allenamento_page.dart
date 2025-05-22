@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/esercizio.dart';
 import '../Components/esercizio_card.dart';
-import '../HomeScreen.dart'; // Assicurati di importare la HomeScreen
+import 'home_screen.dart'; // Assicurati di importare la HomeScreen
 
 class SchedaAllenamentoPage extends StatefulWidget {
   final String schedaId;
