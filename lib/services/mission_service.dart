@@ -44,8 +44,8 @@ class MissionService {
               .get();
       Map<String, int> exerciseCount = {};
       Map<String, double> totalWeight = {};
-      Map<String, dynamic> totalSets = {};
-      Map<String, dynamic> totalReps = {};
+      Map<String, int> totalSets = {}; // Changed from dynamic
+      Map<String, int> totalReps = {}; // Changed from dynamic
       int completedExercises = 0;
       int totalExercises = 0;
       Set<String> workoutDays = {};
@@ -57,9 +57,9 @@ class MissionService {
 
         for (var esercizioDoc in eserciziSnapshot.docs) {
           final data = esercizioDoc.data();
-          final nome = data['nome'] ?? 'Sconosciuto';
-          final serie = data['serie'] ?? 0;
-          final ripetizioni = data['ripetizioni'] ?? 0;
+          final nome = data['nome'] as String? ?? 'Sconosciuto';
+          final serie = (data['serie'] ?? 0) as int; // Ensure int
+          final ripetizioni = (data['ripetizioni'] ?? 0) as int; // Ensure int
           final peso = data['peso'] ?? '0';
           final completato = data['completato'] ?? false;
 
@@ -146,7 +146,9 @@ class MissionService {
     );
 
     // 2. Missione di Volume basata sulle statistiche
-    final totalReps = stats['totalReps'] as Map<String, int>? ?? {};
+    final totalReps =
+        stats['totalReps'] as Map<String, int>? ??
+        {}; // This cast should now be safe
     final avgReps =
         totalReps.values.isEmpty
             ? 50
@@ -312,6 +314,12 @@ class MissionService {
       // Aggiungi esperienza all'utente
       await addExperienceToUser(mission.expReward);
 
+      // Invia notifica per la missione completata
+      await _notificationService.showMissionCompletedNotification(
+        missionTitle: mission.title,
+        expReward: mission.expReward,
+      );
+
       return true;
     } catch (e) {
       print('Errore nel completare la missione: $e');
@@ -441,6 +449,8 @@ class MissionService {
               .where('status', isEqualTo: 'active')
               .get();
 
+      print('Missioni attive trovate: ${activeMissions.docs.length}');
+
       // Se ha meno di 3 missioni attive, genera nuove missioni
       if (activeMissions.docs.length < 3) {
         final newMissions = await generateAIMissions();
@@ -449,10 +459,43 @@ class MissionService {
             newMissions.take(5 - activeMissions.docs.length).toList();
         if (missionsToAdd.isNotEmpty) {
           await saveGeneratedMissions(missionsToAdd);
+          print(
+            'Generate ${missionsToAdd.length} nuove missioni automaticamente',
+          );
+
+          // Invia notifica per le nuove missioni generate
+          await _notificationService.showMissionGeneratedNotification(
+            missionCount: missionsToAdd.length,
+          );
         }
       }
     } catch (e) {
       print('Errore nel generare nuove missioni: $e');
+    }
+  }
+
+  // Genera automaticamente missioni quando si completa un allenamento
+  Future<void> generateMissionsOnWorkoutComplete() async {
+    if (currentUser == null) return;
+
+    try {
+      // Sempre genera nuove missioni dopo un allenamento
+      final newMissions = await generateAIMissions();
+
+      // Prendi le prime 2-3 missioni generate
+      final missionsToAdd = newMissions.take(3).toList();
+
+      if (missionsToAdd.isNotEmpty) {
+        await saveGeneratedMissions(missionsToAdd);
+        print('Generate ${missionsToAdd.length} missioni post-allenamento');
+
+        // Invia notifica per le nuove missioni
+        await _notificationService.showMissionGeneratedNotification(
+          missionCount: missionsToAdd.length,
+        );
+      }
+    } catch (e) {
+      print('Errore nel generare missioni post-allenamento: $e');
     }
   }
 

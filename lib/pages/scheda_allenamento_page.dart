@@ -585,10 +585,10 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
       }
 
       // Ottieni il livello aggiornato
-      final playerLevelAfter = await _missionService.getUserLevel();
-
-      // Controlla se ci sono nuove missioni da generare
-      await _missionService.checkAndGenerateNewMissions();
+      final playerLevelAfter =
+          await _missionService
+              .getUserLevel(); // Controlla se ci sono nuove missioni da generare
+      await _missionService.generateMissionsOnWorkoutComplete();
 
       // Mostra SnackBar con aggiornamento sul progresso
       String message = "Allenamento salvato!";

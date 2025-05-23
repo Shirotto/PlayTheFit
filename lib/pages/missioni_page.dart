@@ -52,6 +52,14 @@ class _MissioniPageState extends State<MissioniPage>
             content: Text('${newMissions.length} nuove missioni generate!'),
             backgroundColor: Colors.green.shade700,
             behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'VEDI',
+              textColor: Colors.white,
+              onPressed: () {
+                // Scroll to top to see new missions
+                setState(() {});
+              },
+            ),
           ),
         );
       }

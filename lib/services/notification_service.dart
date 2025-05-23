@@ -274,9 +274,88 @@ class NotificationService {
       );
 
       await _firestore.collection('notifications').add(notification.toMap());
+      debugPrint(
+        'System notification saved to DB: $title',
+      ); // Added for logging
     } catch (e) {
       debugPrint('Errore nel salvare la notifica di sistema: $e');
     }
+  }
+
+  // Mostra una notifica per le missioni generate
+  Future<void> showMissionGeneratedNotification({
+    required int missionCount,
+  }) async {
+    const String title = '⚔️ Nuove Missioni!';
+    final String body =
+        '$missionCount nuove missioni sono state generate! '
+        'Completale per guadagnare EXP e ricompense.';
+
+    // Mostra notifica locale
+    await _flutterLocalNotificationsPlugin.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000, // ID univoco
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channel.id,
+          _channel.name,
+          channelDescription: _channel.description,
+          icon: '@mipmap/ic_launcher',
+          importance: Importance.high,
+          priority: Priority.high,
+          styleInformation: BigTextStyleInformation(body),
+          color: Colors.blue,
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      payload: 'newMissions_$missionCount',
+    );
+
+    // Salva la notifica nel database per visualizzarla nella pagina notifiche
+    _saveSystemNotificationToDatabase(title, body);
+  }
+
+  // Mostra una notifica per missione completata
+  Future<void> showMissionCompletedNotification({
+    required String missionTitle,
+    required int expReward,
+  }) async {
+    const String title = '✅ Missione Completata!';
+    final String body =
+        'Hai completato "$missionTitle" e guadagnato $expReward EXP!';
+
+    // Mostra notifica locale
+    await _flutterLocalNotificationsPlugin.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000, // ID univoco
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channel.id,
+          _channel.name,
+          channelDescription: _channel.description,
+          icon: '@mipmap/ic_launcher',
+          importance: Importance.high,
+          priority: Priority.high,
+          styleInformation: BigTextStyleInformation(body),
+          color: Colors.green,
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      payload: 'missionCompleted_$expReward',
+    );
+
+    // Salva la notifica nel database per visualizzarla nella pagina notifiche
+    _saveSystemNotificationToDatabase(title, body);
   }
 }
 
