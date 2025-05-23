@@ -3,7 +3,6 @@ import '../models/friendship.dart';
 import '../services/friendship_service.dart';
 import '../services/chat_service.dart';
 import 'chat_detail_page.dart';
-import 'package:intl/intl.dart';
 
 class AmiciPage extends StatefulWidget {
   final int initialTabIndex;

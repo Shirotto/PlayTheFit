@@ -208,6 +208,76 @@ class NotificationService {
       debugPrint('Errore nell\'invio della notifica: $e');
     }
   }
+
+  // Mostra una notifica di level up all'utente
+  Future<void> showLevelUpNotification({
+    required int newLevel,
+    required List<String> rewards,
+  }) async {
+    // Titolo della notifica
+    final title = '🎉 Livello $newLevel Sbloccato!';
+
+    // Corpo della notifica con le ricompense
+    String body = 'Hai raggiunto il livello $newLevel! ';
+    if (rewards.isNotEmpty) {
+      body += 'Ricompense sbloccate:\n${rewards.join('\n')}';
+    } else {
+      body += 'Continua così!';
+    }
+
+    // Mostra una notifica locale
+    await _flutterLocalNotificationsPlugin.show(
+      newLevel.hashCode, // ID unico basato sul livello
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channel.id,
+          _channel.name,
+          channelDescription: _channel.description,
+          icon: '@mipmap/ic_launcher',
+          importance: Importance.high,
+          priority: Priority.high,
+          color: const Color.fromARGB(255, 33, 150, 243), // Blu tema app
+          styleInformation: BigTextStyleInformation(body),
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      payload: 'levelUp_$newLevel',
+    );
+
+    // Salva la notifica nel database per visualizzarla nella pagina notifiche
+    _saveSystemNotificationToDatabase(title, body);
+  }
+
+  // Salva una notifica di sistema nel database
+  Future<void> _saveSystemNotificationToDatabase(
+    String title,
+    String body,
+  ) async {
+    if (_auth.currentUser == null) return;
+
+    try {
+      final notification = UserNotification(
+        id: '',
+        fromUserId: 'system',
+        fromUserName: 'PlayTheFit',
+        toUserId: _auth.currentUser!.uid,
+        message: '$title\n$body', // Include title in the message
+        type: NotificationType.system,
+        createdAt: DateTime.now(),
+        isRead: false,
+      );
+
+      await _firestore.collection('notifications').add(notification.toMap());
+    } catch (e) {
+      debugPrint('Errore nel salvare la notifica di sistema: $e');
+    }
+  }
 }
 
 // Gestisce i messaggi quando l'app è in background

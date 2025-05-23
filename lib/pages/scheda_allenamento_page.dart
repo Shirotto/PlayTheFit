@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/esercizio.dart';
-import '../Components/esercizio_card.dart';
+import '../services/mission_service.dart';
 import 'home_screen.dart'; // Assicurati di importare la HomeScreen
 
 class SchedaAllenamentoPage extends StatefulWidget {
@@ -19,6 +19,7 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
   List<Esercizio> esercizi = [];
 
   late AnimationController _particleAnimationController;
+  final MissionService _missionService = MissionService();
 
   @override
   void initState() {
@@ -52,29 +53,30 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
     salvaEserciziSuFirestore();
   }
 
-  
   Future<void> caricaScheda() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('schede')
-        .doc(widget.schedaId)
-        .collection('esercizi')
-        .get();
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('schede')
+            .doc(widget.schedaId)
+            .collection('esercizi')
+            .get();
 
-    final eserciziCaricati = snapshot.docs.map((doc) {
-      final data = doc.data();
-      return Esercizio(
-        data['nome'],
-        data['serie'],
-        data['ripetizioni'],
-        data['peso'],
-        data['recupero'],
-        data['completato'] ?? false,
-      );
-    }).toList();
+    final eserciziCaricati =
+        snapshot.docs.map((doc) {
+          final data = doc.data();
+          return Esercizio(
+            data['nome'],
+            data['serie'],
+            data['ripetizioni'],
+            data['peso'],
+            data['recupero'],
+            data['completato'] ?? false,
+          );
+        }).toList();
 
     setState(() {
       esercizi = eserciziCaricati;
@@ -239,16 +241,41 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
           IconButton(
             icon: const Icon(Icons.save, color: Colors.white),
             onPressed: () async {
+              final completedEsercizi =
+                  esercizi.where((e) => e.completato).length;
+
               await salvaEserciziSuFirestore();
+
+              String message = "Scheda salvata!";
+              if (completedEsercizi > 0) {
+                message += " Progresso missioni aggiornato.";
+              }
 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text("Scheda salvata!"),
+                  content: Text(message),
                   backgroundColor: Colors.blue.shade700,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
+                  action:
+                      completedEsercizi > 0
+                          ? SnackBarAction(
+                            label: 'Vedi Missioni',
+                            textColor: Colors.white,
+                            onPressed: () {
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                          const HomeScreen(initialTab: 3),
+                                ),
+                                (route) => false,
+                              );
+                            },
+                          )
+                          : null,
                 ),
               );
             },
@@ -401,7 +428,7 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
             ),
           ],
         ),
-      )
+      ),
     );
   }
 
@@ -492,6 +519,110 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
         'recupero': esercizio.recupero,
         'completato': esercizio.completato,
       });
+    }
+
+    // Aggiorna il progresso delle missioni basato su tutti gli esercizi completati
+    final completedExercises =
+        esercizi
+            .where((e) => e.completato)
+            .map(
+              (e) => {
+                'nome': e.nome,
+                'serie': e.serie,
+                'ripetizioni': e.ripetizioni,
+                'peso': e.peso,
+              },
+            )
+            .toList();
+    if (completedExercises.isNotEmpty) {
+      // Ottieni il livello attuale prima di aggiornare il progresso
+      final playerLevelBefore = await _missionService.getUserLevel();
+
+      // Aggiorna il progresso delle missioni
+      await _missionService.updateMissionProgressFromWorkout(
+        completedExercises,
+      );
+
+      // Completa automaticamente le missioni che sono state completate
+      final missionsSnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(FirebaseAuth.instance.currentUser!.uid)
+              .collection('missions')
+              .where('status', isEqualTo: 'active')
+              .get();
+
+      int completedMissions = 0;
+
+      for (var missionDoc in missionsSnapshot.docs) {
+        final mission =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(FirebaseAuth.instance.currentUser!.uid)
+                .collection('missions')
+                .doc(missionDoc.id)
+                .get();
+
+        if (mission.exists) {
+          final data = mission.data()!;
+          final requirements = data['requirements'] as Map<String, dynamic>;
+          final progress = data['progress'] as Map<String, dynamic>;
+
+          bool isCompleted = true;
+          for (var key in requirements.keys) {
+            if (!progress.containsKey(key) ||
+                (progress[key] ?? 0) < (requirements[key] ?? 0)) {
+              isCompleted = false;
+              break;
+            }
+          }
+
+          if (isCompleted) {
+            await _missionService.completeMission(missionDoc.id);
+            completedMissions++;
+          }
+        }
+      }
+
+      // Ottieni il livello aggiornato
+      final playerLevelAfter = await _missionService.getUserLevel();
+
+      // Controlla se ci sono nuove missioni da generare
+      await _missionService.checkAndGenerateNewMissions();
+
+      // Mostra SnackBar con aggiornamento sul progresso
+      String message = "Allenamento salvato!";
+      if (completedMissions > 0) {
+        message +=
+            " ${completedMissions > 1 ? '$completedMissions missioni completate!' : '1 missione completata!'}";
+      } else {
+        message += " Progresso missioni aggiornato.";
+      }
+
+      // Aggiungi informazioni sul livello se è cambiato
+      if (playerLevelAfter.level > playerLevelBefore.level) {
+        message += " Sei salito al livello ${playerLevelAfter.level}!";
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.green.shade800,
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'MISSIONI',
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HomeScreen(initialTab: 3),
+                ),
+              );
+            },
+            textColor: Colors.white,
+          ),
+        ),
+      );
     }
   }
 }

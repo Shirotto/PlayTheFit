@@ -10,6 +10,9 @@ import 'amici_page.dart';
 import 'notifications_page.dart';
 import 'chat_list_page.dart';
 import '../widgets/notification_badge.dart';
+import '../widgets/level_up_celebration.dart';
+import '../services/mission_service.dart';
+import '../models/player_level.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialTab;
@@ -21,13 +24,17 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final User user = FirebaseAuth.instance.currentUser!;
+  final MissionService _missionService = MissionService();
 
-  final int userLevel = 5;
-  final double expProgress = 0.7;
   final String characterAsset = 'assets/character.png';
 
   late int _selectedIndex;
   String? schedaId;
+
+  // Stato per il level up
+  bool _showLevelUpCelebration = false;
+  int _newLevel = 0;
+  List<String> _levelRewards = [];
 
   late AnimationController _characterAnimationController;
   late AnimationController _particleAnimationController;
@@ -78,13 +85,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Future<void> _caricaSchedaId() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
-    final snap = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('schede')
-        .orderBy('data_creazione')
-        .limit(1)
-        .get();
+    final snap =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('schede')
+            .orderBy('data_creazione')
+            .limit(1)
+            .get();
 
     if (snap.docs.isNotEmpty) {
       setState(() {
@@ -133,6 +141,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           _buildBackground(),
           _buildStarfieldAnimation(),
           IndexedStack(index: _selectedIndex, children: pageOptions),
+
+          // Monitoraggio livello per celebration
+          StreamBuilder<PlayerLevel>(
+            stream: _missionService.getUserLevelStream(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data != null) {
+                // Primo caricamento dello state
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _checkForLevelUp(snapshot.data!);
+                });
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
+
+          // Level Up Celebration overlay
+          if (_showLevelUpCelebration)
+            LevelUpCelebration(
+              level: _newLevel,
+              rewards: _levelRewards,
+              onDismissed: () {
+                setState(() {
+                  _showLevelUpCelebration = false;
+                });
+              },
+            ),
         ],
       ),
     );
@@ -380,38 +415,51 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     size: 22,
                   ),
                 ),
-              ),
-              // Livello utente
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade800,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.5),
-                      spreadRadius: 1,
-                      blurRadius: 8,
-                      offset: const Offset(0, 0),
+              ), // Livello utente
+              StreamBuilder<PlayerLevel>(
+                stream: _missionService.getUserLevelStream(),
+                builder: (context, snapshot) {
+                  final playerLevel =
+                      snapshot.data ??
+                      PlayerLevel(
+                        level: 1,
+                        currentExp: 0,
+                        expToNextLevel: 100,
+                        totalExp: 0,
+                      );
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.star, color: Colors.amber, size: 20),
-                    const SizedBox(width: 4),
-                    Text(
-                      "LV $userLevel",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade800,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(0.5),
+                          spreadRadius: 1,
+                          blurRadius: 8,
+                          offset: const Offset(0, 0),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.star, color: Colors.amber, size: 20),
+                        const SizedBox(width: 4),
+                        Text(
+                          "LV ${playerLevel.level}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -421,53 +469,69 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildExperienceBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 5, 20, 20),
-      child: Stack(
-        children: [
-          Container(
-            height: 6,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade800,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return AnimatedBuilder(
-                animation: _experienceBarAnimation,
-                builder: (context, child) {
-                  return Container(
-                    height: 6,
-                    width: constraints.maxWidth * expProgress,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.blue, Colors.purple, Colors.blue],
-                        stops: const [0.0, 0.5, 1.0],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        transform: GradientRotation(
-                          _experienceBarAnimation.value * 2 * math.pi,
-                        ),
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.blue.withOpacity(
-                            0.5 + _experienceBarAnimation.value * 0.2,
+    return StreamBuilder<PlayerLevel>(
+      stream: _missionService.getUserLevelStream(),
+      builder: (context, snapshot) {
+        final playerLevel =
+            snapshot.data ??
+            PlayerLevel(
+              level: 1,
+              currentExp: 0,
+              expToNextLevel: 100,
+              totalExp: 0,
+            );
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 5, 20, 20),
+          child: Stack(
+            children: [
+              Container(
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade800,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return AnimatedBuilder(
+                    animation: _experienceBarAnimation,
+                    builder: (context, child) {
+                      return Container(
+                        height: 6,
+                        width:
+                            constraints.maxWidth *
+                            playerLevel.progressPercentage,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.blue, Colors.purple, Colors.blue],
+                            stops: const [0.0, 0.5, 1.0],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            transform: GradientRotation(
+                              _experienceBarAnimation.value * 2 * math.pi,
+                            ),
                           ),
-                          spreadRadius: 1,
-                          blurRadius: 6,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(
+                                0.5 + _experienceBarAnimation.value * 0.2,
+                              ),
+                              spreadRadius: 1,
+                              blurRadius: 6,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
-              );
-            },
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -515,102 +579,214 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildDailyChallenge() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.blue.shade900.withOpacity(0.7),
-              Colors.purple.shade900.withOpacity(0.7),
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.blue.withOpacity(0.2),
-              blurRadius: 10,
-              spreadRadius: 0,
+    return StreamBuilder<PlayerLevel>(
+      stream: _missionService.getUserLevelStream(),
+      builder: (context, snapshot) {
+        final playerLevel =
+            snapshot.data ??
+            PlayerLevel(
+              level: 1,
+              currentExp: 0,
+              expToNextLevel: 100,
+              totalExp: 0,
+            );
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.blue.shade900.withOpacity(0.7),
+                  Colors.purple.shade900.withOpacity(0.7),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                ),
+              ],
+              border: Border.all(
+                color: Colors.white.withOpacity(0.1),
+                width: 1,
+              ),
             ),
-          ],
-          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.notifications,
-                    color: Colors.amber,
-                    size: 22,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.emoji_events,
+                        color: Colors.amber,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        "Sfide Attive",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedIndex = 3; // Vai alla pagina missioni
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          "VEDI TUTTE",
+                          style: TextStyle(
+                            color: Colors.greenAccent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Completa missioni per accumulare ${playerLevel.expToNextLevel} XP e salire al livello ${playerLevel.level + 1}",
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Stack(
+                    children: [
+                      LinearProgressIndicator(
+                        value: playerLevel.progressPercentage,
+                        minHeight: 10,
+                        backgroundColor: Colors.grey.shade800,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
+                      ),
+                      // Animazione brillante sopra la barra di progresso
+                      AnimatedBuilder(
+                        animation: _experienceBarAnimation,
+                        builder: (context, child) {
+                          return Positioned(
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                            child: AnimatedOpacity(
+                              opacity:
+                                  0.3 + (_experienceBarAnimation.value * 0.3),
+                              duration: const Duration(milliseconds: 500),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.white.withOpacity(0.2),
+                                      Colors.transparent,
+                                    ],
+                                    stops: const [0.0, 0.5, 1.0],
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                    transform: GradientRotation(
+                                      _experienceBarAnimation.value *
+                                          2 *
+                                          math.pi,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    "Sfida giornaliera",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    "NUOVO",
-                    style: TextStyle(
-                      color: Colors.greenAccent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
+                const SizedBox(height: 8),
+                Text(
+                  "${playerLevel.currentExp}/${playerLevel.currentExp + playerLevel.expToNextLevel} XP",
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  textAlign: TextAlign.end,
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            const Text(
-              "Completa 3000 passi oggi",
-              style: TextStyle(color: Colors.white, fontSize: 15),
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: 0.4,
-                minHeight: 10,
-                backgroundColor: Colors.grey.shade800,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "1200/3000 passi",
-              style: TextStyle(color: Colors.white70, fontSize: 13),
-              textAlign: TextAlign.end,
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
+  }
+
+  // Controlla se c'è stato un level up e mostra la celebrazione
+  void _checkForLevelUp(PlayerLevel currentLevel) async {
+    // Ottieni l'ultimo livello memorizzato dalle SharedPreferences o da Firestore
+    final userDoc =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+    final lastLevelUpDate = userDoc.data()?['lastLevelUpDate'] as Timestamp?;
+    final lastShownLevel = userDoc.data()?['lastShownLevel'] as int? ?? 0;
+
+    // Se il livello corrente è maggiore dell'ultimo livello mostrato e non è il primo accesso
+    if (currentLevel.level > lastShownLevel && lastShownLevel > 0) {
+      // Se c'è stata una data di level up recente (ultimi 60 secondi), mostra la celebrazione
+      final now = DateTime.now();
+
+      if (lastLevelUpDate != null) {
+        final levelUpTime = lastLevelUpDate.toDate();
+        final difference = now.difference(levelUpTime);
+
+        // Se il level up è avvenuto negli ultimi 60 secondi, mostra la celebrazione
+        if (difference.inSeconds < 60) {
+          // Ottieni le ricompense
+          final rewardsMap = LevelRewards.getLevelRewards(currentLevel.level);
+          final rewards = rewardsMap[currentLevel.level] ?? [];
+
+          setState(() {
+            _showLevelUpCelebration = true;
+            _newLevel = currentLevel.level;
+            _levelRewards = rewards;
+          });
+
+          // Aggiorna l'ultimo livello mostrato
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .update({'lastShownLevel': currentLevel.level});
+        }
+      }
+    } else if (lastShownLevel == 0) {
+      // Se è il primo accesso, imposta l'ultimo livello mostrato
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+        {'lastShownLevel': currentLevel.level},
+      );
+    }
   }
 }
 
