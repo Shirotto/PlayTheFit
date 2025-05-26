@@ -493,19 +493,22 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
       ),
     );
   }
-
   Future<void> salvaEserciziSuFirestore() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
-    final eserciziRef = FirebaseFirestore.instance
+    final schedaRef = FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('schede')
-        .doc(widget.schedaId)
-        .collection('esercizi');
+        .doc(widget.schedaId);
+    
+    final eserciziRef = schedaRef.collection('esercizi');
+
+    // Controlla se è la prima volta che viene salvata questa scheda
+    final existingSnapshot = await eserciziRef.get();
+    final isNewWorkout = existingSnapshot.docs.isEmpty;
 
     // Cancella tutti gli esercizi esistenti
-    final snapshot = await eserciziRef.get();
-    for (var doc in snapshot.docs) {
+    for (var doc in existingSnapshot.docs) {
       await doc.reference.delete();
     }
 
@@ -518,6 +521,23 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
         'peso': esercizio.peso,
         'recupero': esercizio.recupero,
         'completato': esercizio.completato,
+      });
+    }
+
+    // Se è una nuova scheda, aggiorna i metadati
+    if (isNewWorkout) {
+      await schedaRef.set({
+        'data_creazione': FieldValue.serverTimestamp(),
+        'data_ultima_modifica': FieldValue.serverTimestamp(),
+        'is_new': false, // Marca come non più nuova dopo il primo salvataggio
+      }, SetOptions(merge: true));
+      
+      // Genera missioni solo per la nuova scheda
+      await _missionService.generateMissionsOnWorkoutCreation();
+    } else {
+      // Aggiorna solo la data di modifica per schede esistenti
+      await schedaRef.update({
+        'data_ultima_modifica': FieldValue.serverTimestamp(),
       });
     }
 
@@ -580,22 +600,24 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
           if (isCompleted) {
             await _missionService.completeMission(missionDoc.id);
             completedMissions++;
-          }
-        }
+          }        }
       }
 
-      // Ottieni il livello aggiornato
-      final playerLevelAfter =
-          await _missionService
-              .getUserLevel(); // Controlla se ci sono nuove missioni da generare
-      await _missionService.generateMissionsOnWorkoutComplete();
+      // Ottieni il livello aggiornato dopo aver completato eventuali missioni
+      final playerLevelAfter = await _missionService.getUserLevel();
+      
+      // Genera nuove missioni solo se ci sono esercizi completati (allenamento effettivo)
+      // Non se è solo una scheda nuova creata
+      if (completedExercises.isNotEmpty) {
+        await _missionService.generateMissionsOnWorkoutComplete();
+      }
 
       // Mostra SnackBar con aggiornamento sul progresso
       String message = "Allenamento salvato!";
       if (completedMissions > 0) {
         message +=
             " ${completedMissions > 1 ? '$completedMissions missioni completate!' : '1 missione completata!'}";
-      } else {
+      } else if (completedExercises.isNotEmpty) {
         message += " Progresso missioni aggiornato.";
       }
 

@@ -239,11 +239,17 @@ class MissionService {
         createdAt: now,
         expiresAt: now.add(const Duration(days: 6)),
       ),
-    ];
+    ];    newMissions.add(randomMissions[random.nextInt(randomMissions.length)]);
 
-    newMissions.add(randomMissions[random.nextInt(randomMissions.length)]);
+    // Filtra le missioni duplicate prima di restituirle
+    List<Mission> filteredMissions = [];
+    for (var mission in newMissions) {
+      if (!(await hasSimilarActiveMission(mission))) {
+        filteredMissions.add(mission);
+      }
+    }
 
-    return newMissions;
+    return filteredMissions.isNotEmpty ? filteredMissions : newMissions.take(1).toList();
   }
 
   // Salva le missioni generate nel database
@@ -447,16 +453,14 @@ class MissionService {
               .doc(currentUser!.uid)
               .collection('missions')
               .where('status', isEqualTo: 'active')
-              .get();
+              .get();      print('Missioni attive trovate: ${activeMissions.docs.length}');
 
-      print('Missioni attive trovate: ${activeMissions.docs.length}');
-
-      // Se ha meno di 3 missioni attive, genera nuove missioni
-      if (activeMissions.docs.length < 3) {
+      // Se ha meno di 2 missioni attive, genera solo 1-2 nuove missioni (meno aggressivo)
+      if (activeMissions.docs.length < 2) {
         final newMissions = await generateAIMissions();
-        // Prendi solo il numero necessario per arrivare a 5 missioni totali
+        // Prendi solo il numero necessario per arrivare a 3 missioni totali massimo
         final missionsToAdd =
-            newMissions.take(5 - activeMissions.docs.length).toList();
+            newMissions.take(3 - activeMissions.docs.length).toList();
         if (missionsToAdd.isNotEmpty) {
           await saveGeneratedMissions(missionsToAdd);
           print(
@@ -468,34 +472,133 @@ class MissionService {
             missionCount: missionsToAdd.length,
           );
         }
+      } else {
+        print('L\'utente ha già abbastanza missioni attive (${activeMissions.docs.length})');
       }
     } catch (e) {
       print('Errore nel generare nuove missioni: $e');
     }
   }
-
-  // Genera automaticamente missioni quando si completa un allenamento
+  // Genera automaticamente missioni quando si completa un allenamento (meno aggressivo)
   Future<void> generateMissionsOnWorkoutComplete() async {
     if (currentUser == null) return;
-
+    
     try {
-      // Sempre genera nuove missioni dopo un allenamento
-      final newMissions = await generateAIMissions();
+      // Controlla quante missioni attive ha l'utente
+      final activeMissionsSnapshot = await _firestore
+          .collection('users')
+          .doc(currentUser!.uid)
+          .collection('missions')
+          .where('status', isEqualTo: 'active')
+          .get();
 
-      // Prendi le prime 2-3 missioni generate
-      final missionsToAdd = newMissions.take(3).toList();
-
-      if (missionsToAdd.isNotEmpty) {
-        await saveGeneratedMissions(missionsToAdd);
-        print('Generate ${missionsToAdd.length} missioni post-allenamento');
-
-        // Invia notifica per le nuove missioni
-        await _notificationService.showMissionGeneratedNotification(
-          missionCount: missionsToAdd.length,
-        );
+      // Genera nuove missioni solo se l'utente ha meno di 2 missioni attive
+      if (activeMissionsSnapshot.docs.length < 2) {
+        final newMissions = await generateAIMissions();
+        // Genera solo 1-2 missioni per volta per evitare il sovraccarico
+        final missionsToAdd = newMissions.take(2 - activeMissionsSnapshot.docs.length).toList();
+        
+        if (missionsToAdd.isNotEmpty) {
+          await saveGeneratedMissions(missionsToAdd);
+          print('Generate ${missionsToAdd.length} missioni post-allenamento');
+          
+          // Invia notifica per le nuove missioni
+          await _notificationService.showMissionGeneratedNotification(
+            missionCount: missionsToAdd.length,
+          );
+        }
+      } else {
+        print('L\'utente ha già ${activeMissionsSnapshot.docs.length} missioni attive, non ne vengono generate di nuove');
       }
     } catch (e) {
       print('Errore nel generare missioni post-allenamento: $e');
+    }
+  }
+
+  // Genera missioni solo quando si crea una nuova scheda di allenamento (non ad ogni salvataggio)
+  Future<void> generateMissionsOnWorkoutCreation() async {
+    if (currentUser == null) return;
+    
+    try {
+      // Controlla se l'utente ha già delle missioni attive
+      final activeMissionsSnapshot = await _firestore
+          .collection('users')
+          .doc(currentUser!.uid)
+          .collection('missions')
+          .where('status', isEqualTo: 'active')
+          .get();
+
+      // Se ha già missioni attive, non generarne di nuove
+      if (activeMissionsSnapshot.docs.isNotEmpty) {
+        print('L\'utente ha già ${activeMissionsSnapshot.docs.length} missioni attive, non ne vengono generate di nuove');
+        return;
+      }
+
+      // Controlla se ha già completato almeno una scheda in passato
+      final schedeSnapshot = await _firestore
+          .collection('users')
+          .doc(currentUser!.uid)
+          .collection('schede')
+          .get();
+
+      // Se è la prima scheda o non ha missioni, genera nuove missioni
+      if (schedeSnapshot.docs.length <= 1 || activeMissionsSnapshot.docs.isEmpty) {
+        final newMissions = await generateAIMissions();
+        // Genera solo 3 missioni iniziali per non sovraccaricare l'utente
+        final missionsToAdd = newMissions.take(3).toList();
+        
+        if (missionsToAdd.isNotEmpty) {
+          await saveGeneratedMissions(missionsToAdd);
+          print('Generate ${missionsToAdd.length} missioni per nuova scheda di allenamento');
+          
+          // Invia notifica per le nuove missioni
+          await _notificationService.showMissionGeneratedNotification(
+            missionCount: missionsToAdd.length,
+          );
+        }
+      }
+    } catch (e) {
+      print('Errore nel generare missioni per nuova scheda: $e');
+    }
+  }
+
+  // Funzione di utilità per evitare duplicazioni di missioni
+  Future<bool> hasSimilarActiveMission(Mission newMission) async {
+    if (currentUser == null) return false;
+    
+    try {
+      final activeMissionsSnapshot = await _firestore
+          .collection('users')
+          .doc(currentUser!.uid)
+          .collection('missions')
+          .where('status', isEqualTo: 'active')
+          .where('type', isEqualTo: newMission.type.toString().split('.').last)
+          .get();
+      
+      // Controlla se esiste già una missione simile
+      for (var doc in activeMissionsSnapshot.docs) {
+        final existingMission = Mission.fromMap(doc.data(), doc.id);
+        
+        // Se è dello stesso tipo e ha requisiti simili, considera come duplicata
+        if (existingMission.type == newMission.type) {
+          if (newMission.specificExercise != null && 
+              existingMission.specificExercise == newMission.specificExercise) {
+            return true; // Missione per lo stesso esercizio specifico
+          }
+          
+          // Per missioni generiche, controlla i requisiti
+          final newReqKeys = newMission.requirements.keys.toSet();
+          final existingReqKeys = existingMission.requirements.keys.toSet();
+          if (newReqKeys.intersection(existingReqKeys).isNotEmpty) {
+            return true; // Ha requisiti simili
+          }
+        }
+      }
+      
+      return false;
+    } catch (e) {
+      print('Errore nel controllo missioni duplicate: $e');
+      return false;
     }
   }
 

@@ -15,8 +15,6 @@ class _MissioniPageState extends State<MissioniPage>
     with SingleTickerProviderStateMixin {
   final MissionService _missionService = MissionService();
   late AnimationController _animationController;
-  bool _isGeneratingMissions = false;
-
   @override
   void initState() {
     super.initState();
@@ -25,61 +23,13 @@ class _MissioniPageState extends State<MissioniPage>
       duration: const Duration(seconds: 60),
     )..repeat();
 
-    // Genera missioni all'avvio se necessario
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _missionService.checkAndGenerateNewMissions();
-    });
+    // Le missioni vengono ora generate automaticamente solo quando si crea una nuova scheda
+    // Non generiamo più missioni all'avvio della pagina per evitare sovraccarico
   }
-
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
-  }
-
-  Future<void> _generateNewMissions() async {
-    setState(() {
-      _isGeneratingMissions = true;
-    });
-
-    try {
-      final newMissions = await _missionService.generateAIMissions();
-      await _missionService.saveGeneratedMissions(newMissions);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${newMissions.length} nuove missioni generate!'),
-            backgroundColor: Colors.green.shade700,
-            behavior: SnackBarBehavior.floating,
-            action: SnackBarAction(
-              label: 'VEDI',
-              textColor: Colors.white,
-              onPressed: () {
-                // Scroll to top to see new missions
-                setState(() {});
-              },
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Errore nella generazione delle missioni: $e'),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isGeneratingMissions = false;
-        });
-      }
-    }
   }
 
   Future<void> _completeMission(Mission mission) async {
@@ -256,31 +206,8 @@ class _MissioniPageState extends State<MissioniPage>
                 ),
               ],
             ),
-          ),
-          ElevatedButton.icon(
-            onPressed: _isGeneratingMissions ? null : _generateNewMissions,
-            icon:
-                _isGeneratingMissions
-                    ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                    : const Icon(Icons.auto_awesome, color: Colors.white),
-            label: Text(
-              _isGeneratingMissions ? 'Generando...' : 'Nuove Missioni',
-              style: const TextStyle(color: Colors.white),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.purple.shade700,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-            ),
-          ),
+          ),        // Bottone rimosso - le missioni vengono generate automaticamente
+        // quando si inserisce una nuova scheda di allenamento
         ],
       ),
     );
@@ -396,10 +323,9 @@ class _MissioniPageState extends State<MissioniPage>
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
-                const SizedBox(height: 10),
+                ),                const SizedBox(height: 10),
                 Text(
-                  'Genera nuove missioni usando il pulsante in alto',
+                  'Non ci sono missioni al momento, completa il primo allenamento per generare nuove missioni',
                   style: TextStyle(color: Colors.grey[300]),
                   textAlign: TextAlign.center,
                 ),
