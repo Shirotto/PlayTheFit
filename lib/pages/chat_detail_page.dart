@@ -3,7 +3,9 @@ import '../models/message.dart';
 import '../services/chat_service.dart';
 import '../services/auth_service.dart';
 import 'package:intl/intl.dart';
-import 'dart:io';
+import '../theme/app_design_system.dart';
+import '../widgets/app_components.dart';
+import '../widgets/app_background.dart';
 
 class ChatDetailPage extends StatefulWidget {
   final String chatId;
@@ -67,25 +69,30 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final currentUserId = _authService.currentUser?.uid;
 
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
-        title: Text(widget.receiverName),
-        backgroundColor: Colors.purple.shade800,
+        title: Text(
+          widget.receiverName,
+          style: AppDesignSystem.headingMedium.copyWith(
+            color: AppDesignSystem.textPrimary,
+          ),
+        ),
+        backgroundColor: AppDesignSystem.darkPrimary,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
+          AppComponents.iconButton(
+            icon: Icons.info_outline,
             onPressed: () {
               // Apri info chat
             },
+            iconColor: AppDesignSystem.textPrimary,
+            tooltip: 'Info chat',
           ),
         ],
       ),
-      backgroundColor: Colors.black87,
       body: Column(
         children: [
           Expanded(
@@ -93,23 +100,23 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               stream: _chatService.getChatMessages(widget.chatId),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return AppComponents.loadingIndicator();
                 }
 
                 final messages = snapshot.data ?? [];
 
                 if (messages.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'Nessun messaggio. Inizia a chattare!',
-                      style: TextStyle(color: Colors.white70),
-                    ),
+                  return AppComponents.emptyState(
+                    icon: Icons.chat_bubble_outline,
+                    title: 'Nessun messaggio',
+                    subtitle: 'Inizia a chattare!',
+                    iconColor: AppDesignSystem.primary,
                   );
                 }
 
                 return ListView.builder(
                   reverse: true,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppDesignSystem.paddingM),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final message = messages[index];
@@ -126,10 +133,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       ),
     );
   }
-
   Widget _buildMessageItem(Message message, bool isMe) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppDesignSystem.paddingM),
       child: Row(
         mainAxisAlignment:
             isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
@@ -138,37 +144,30 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           if (!isMe)
             CircleAvatar(
               radius: 16,
-              backgroundColor: Colors.blue.shade400,
+              backgroundColor: AppDesignSystem.primary,
               child: Text(
                 message.senderName.substring(0, 1).toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
+                style: AppDesignSystem.bodySmall.copyWith(
+                  color: AppDesignSystem.textPrimary,
                   fontWeight: FontWeight.bold,
-                  fontSize: 12,
                 ),
               ),
             ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDesignSystem.paddingS),
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.all(AppDesignSystem.paddingM),
               decoration: BoxDecoration(
-                color: isMe ? Colors.blue.shade700 : Colors.grey.shade800,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 3,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: isMe ? AppDesignSystem.primary : AppDesignSystem.cardBackground,
+                borderRadius: BorderRadius.circular(AppDesignSystem.radiusL),
+                boxShadow: AppDesignSystem.shadowS,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (message.imageUrl != null) ...[
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
                       child: Image.network(
                         message.imageUrl!,
                         width: 200,
@@ -178,7 +177,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                           return Container(
                             width: 200,
                             height: 150,
-                            color: Colors.grey.shade700,
+                            color: AppDesignSystem.cardBackgroundSecondary,
                             child: const Center(
                               child: CircularProgressIndicator(),
                             ),
@@ -188,44 +187,44 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                           return Container(
                             width: 200,
                             height: 100,
-                            color: Colors.grey.shade700,
-                            child: const Center(
-                              child: Icon(
-                                Icons.error_outline,
-                                color: Colors.white70,
-                              ),
+                            color: AppDesignSystem.cardBackgroundSecondary,
+                            child: Icon(
+                              Icons.error_outline,
+                              color: AppDesignSystem.textTertiary,
                             ),
                           );
                         },
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppDesignSystem.paddingS),
                   ],
                   Text(
                     message.content,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                    style: AppDesignSystem.bodyLarge.copyWith(
+                      color: isMe ? AppDesignSystem.textPrimary : AppDesignSystem.textPrimary,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppDesignSystem.paddingXS),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
                         _formatMessageTime(message.timestamp),
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 10,
+                        style: AppDesignSystem.caption.copyWith(
+                          color: isMe 
+                              ? AppDesignSystem.textPrimary.withOpacity(0.7)
+                              : AppDesignSystem.textTertiary,
                         ),
                       ),
                       if (isMe) ...[
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppDesignSystem.paddingXS),
                         Icon(
                           message.isRead ? Icons.done_all : Icons.done,
                           size: 14,
-                          color:
-                              message.isRead
-                                  ? Colors.blue.shade300
-                                  : Colors.white70,
+                          color: message.isRead
+                              ? AppDesignSystem.success
+                              : AppDesignSystem.textTertiary,
                         ),
                       ],
                     ],
@@ -234,68 +233,72 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDesignSystem.paddingS),
           if (isMe) const SizedBox(width: 32), // Spazio equivalente all'avatar
         ],
       ),
     );
   }
-
   Widget _buildInputArea() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      padding: const EdgeInsets.all(AppDesignSystem.paddingM),
       decoration: BoxDecoration(
-        color: Colors.grey.shade900,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
-          ),
-        ],
+        color: AppDesignSystem.darkSecondary,
+        boxShadow: AppDesignSystem.shadowM,
       ),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.attach_file, color: Colors.white70),
+          AppComponents.iconButton(
+            icon: Icons.attach_file,
             onPressed: () {
               // Implementare l'invio di file
             },
+            iconColor: AppDesignSystem.textTertiary,
+            tooltip: 'Allega file',
           ),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppDesignSystem.paddingM),
               decoration: BoxDecoration(
-                color: Colors.grey.shade800,
-                borderRadius: BorderRadius.circular(24),
+                color: AppDesignSystem.cardBackground,
+                borderRadius: BorderRadius.circular(AppDesignSystem.radiusXL),
               ),
               child: TextField(
                 controller: _messageController,
-                style: const TextStyle(color: Colors.white),
+                style: AppDesignSystem.bodyLarge,
                 maxLines: 5,
                 minLines: 1,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   border: InputBorder.none,
                   hintText: 'Scrivi un messaggio',
-                  hintStyle: TextStyle(color: Colors.white54),
-                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+                  hintStyle: AppDesignSystem.bodyLarge.copyWith(
+                    color: AppDesignSystem.textTertiary,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: AppDesignSystem.paddingM,
+                  ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDesignSystem.paddingS),
           _isLoading
-              ? const Padding(
-                padding: EdgeInsets.all(8.0),
+              ? Padding(
+                padding: const EdgeInsets.all(AppDesignSystem.paddingS),
                 child: SizedBox(
                   height: 24,
                   width: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppDesignSystem.primary,
+                  ),
                 ),
               )
-              : IconButton(
+              : AppComponents.iconButton(
+                icon: Icons.send,
                 onPressed: _sendMessage,
-                icon: Icon(Icons.send, color: Colors.blue.shade400),
+                iconColor: AppDesignSystem.primary,
+                tooltip: 'Invia messaggio',
               ),
         ],
       ),

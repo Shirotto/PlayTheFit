@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
 import 'dart:async';
+import '../theme/app_design_system.dart';
+import '../widgets/app_components.dart';
+import '../widgets/app_background.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -105,83 +107,62 @@ class _ProfilePageState extends State<ProfilePage>
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return _buildLoadingScreen();
     }
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.indigo.shade900, Colors.black],
+    return AppScaffold(
+      body: Column(
+        children: [
+          _buildProfileHeader(),
+          _buildTabBar(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildInfoTab(),
+                _buildStatsTab(),
+                _buildSettingsTab(),
+              ],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildProfileHeader(),
-              _buildTabBar(),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildInfoTab(),
-                    _buildStatsTab(),
-                    _buildSettingsTab(),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton:
+        ],
+      ),      floatingActionButton:
           _isEditingProfile
               ? FloatingActionButton(
-                backgroundColor: Colors.green,
+                backgroundColor: AppDesignSystem.success,
+                foregroundColor: AppDesignSystem.textPrimary,
                 onPressed: _saveProfile,
                 child: const Icon(Icons.save),
               )
               : null,
     );
   }
-
   Widget _buildLoadingScreen() {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.indigo.shade900, Colors.black],
-          ),
-        ),
-        child: const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
-      ),
+    return AppScaffold(
+      body: AppComponents.loadingIndicator(message: 'Caricamento profilo...'),
     );
   }
-
   Widget _buildProfileHeader() {
     final isOnline = _userData?['isOnline'] ?? false;
     final lastOnline = _userData?['lastOnline'] as Timestamp?;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppDesignSystem.paddingL),
       child: Column(
         children: [
           Stack(
             children: [
               CircleAvatar(
                 radius: 50,
-                backgroundColor: Colors.blue.shade400,
-                child: const Icon(Icons.person, size: 50, color: Colors.white),
+                backgroundColor: AppDesignSystem.primary,
+                child: Icon(
+                  Icons.person, 
+                  size: 50, 
+                  color: AppDesignSystem.textPrimary,
+                ),
               ),
               Positioned(
                 right: 0,
@@ -189,47 +170,52 @@ class _ProfilePageState extends State<ProfilePage>
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: AppDesignSystem.cardBackground,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(
+                      color: AppDesignSystem.textPrimary, 
+                      width: 2,
+                    ),
                   ),
                   child: Icon(
                     isOnline ? Icons.circle : Icons.access_time,
-                    color: isOnline ? Colors.green : Colors.amber,
+                    color: isOnline ? AppDesignSystem.success : AppDesignSystem.warning,
                     size: 16,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: AppDesignSystem.paddingM),
           Text(
             _userData?['username'] ?? 'Username',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
+            style: AppDesignSystem.headingLarge.copyWith(
+              color: AppDesignSystem.textPrimary,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: AppDesignSystem.paddingS),
           Text(
             _userData?['email'] ?? 'email@example.com',
-            style: TextStyle(color: Colors.grey[300], fontSize: 16),
+            style: AppDesignSystem.bodyLarge.copyWith(
+              color: AppDesignSystem.textSecondary,
+            ),
           ),
           if (!isOnline && lastOnline != null)
             Padding(
-              padding: const EdgeInsets.only(top: 5),
+              padding: const EdgeInsets.only(top: AppDesignSystem.paddingS),
               child: Text(
                 'Ultimo accesso: ${_formatDate(lastOnline.toDate())}',
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                style: AppDesignSystem.bodySmall.copyWith(
+                  color: AppDesignSystem.textTertiary,
+                ),
               ),
             ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppDesignSystem.paddingS),
           Text(
             _userData?['bio'] ?? 'Nessuna bio disponibile',
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
+            style: AppDesignSystem.bodyMedium.copyWith(
+              color: AppDesignSystem.textSecondary,
               fontStyle: FontStyle.italic,
             ),
             textAlign: TextAlign.center,
@@ -238,11 +224,15 @@ class _ProfilePageState extends State<ProfilePage>
       ),
     );
   }
-
   Widget _buildTabBar() {
     return TabBar(
       controller: _tabController,
-      indicatorColor: Colors.blue.shade400,
+      indicatorColor: AppDesignSystem.primary,
+      labelColor: AppDesignSystem.textPrimary,
+      unselectedLabelColor: AppDesignSystem.textSecondary,
+      labelStyle: AppDesignSystem.bodyMedium.copyWith(
+        fontWeight: FontWeight.w600,
+      ),
       tabs: const [
         Tab(text: 'Profilo'),
         Tab(text: 'Statistiche'),
@@ -250,10 +240,9 @@ class _ProfilePageState extends State<ProfilePage>
       ],
     );
   }
-
   Widget _buildInfoTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppDesignSystem.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -265,18 +254,10 @@ class _ProfilePageState extends State<ProfilePage>
           if (!_isEditingProfile)
             Center(
               child: Padding(
-                padding: const EdgeInsets.only(top: 20),
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Modifica Profilo'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade700,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                  ),
+                padding: const EdgeInsets.only(top: AppDesignSystem.paddingL),
+                child: AppComponents.primaryButton(
+                  text: 'Modifica Profilo',
+                  icon: Icons.edit,
                   onPressed: () {
                     setState(() {
                       _isEditingProfile = true;
@@ -288,9 +269,7 @@ class _ProfilePageState extends State<ProfilePage>
         ],
       ),
     );
-  }
-
-  Widget _buildEditProfileForm() {
+  }  Widget _buildEditProfileForm() {
     return Column(
       children: [
         _buildInfoField(
@@ -299,7 +278,7 @@ class _ProfilePageState extends State<ProfilePage>
           controller: _usernameController,
           isEditable: true,
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: AppDesignSystem.paddingM),
         _buildInfoField(
           'Bio',
           Icons.description,
@@ -307,14 +286,21 @@ class _ProfilePageState extends State<ProfilePage>
           isEditable: true,
           maxLines: 4,
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: AppDesignSystem.paddingM),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TextButton.icon(
-              icon: const Icon(Icons.cancel, color: Colors.red),
-              label: const Text('Annulla'),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              icon: Icon(Icons.cancel, color: AppDesignSystem.error),
+              label: Text(
+                'Annulla',
+                style: AppDesignSystem.bodyMedium.copyWith(
+                  color: AppDesignSystem.error,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: AppDesignSystem.error,
+              ),
               onPressed: () {
                 setState(() {
                   _usernameController.text = _userData?['username'] ?? '';
@@ -322,6 +308,12 @@ class _ProfilePageState extends State<ProfilePage>
                   _isEditingProfile = false;
                 });
               },
+            ),
+            const SizedBox(width: AppDesignSystem.paddingL),
+            AppComponents.successButton(
+              text: 'Salva',
+              icon: Icons.save,
+              onPressed: _saveProfile,
             ),
           ],
         ),
@@ -340,22 +332,21 @@ class _ProfilePageState extends State<ProfilePage>
           'Username',
           Icons.person,
           value: _userData?['username'] ?? 'Non impostato',
-        ),
-        const SizedBox(height: 15),
+        ),        const SizedBox(height: AppDesignSystem.paddingM),
         _buildInfoField(
           'Email',
           Icons.email,
           value: _userData?['email'] ?? 'Non impostato',
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: AppDesignSystem.paddingM),
         _buildInfoField(
           'Bio',
           Icons.description,
           value: _userData?['bio'] ?? 'Nessuna bio disponibile',
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: AppDesignSystem.paddingM),
         _buildInfoField('Amici', Icons.people, value: '$friendsCount'),
-        const SizedBox(height: 15),
+        const SizedBox(height: AppDesignSystem.paddingM),
         _buildInfoField(
           'Membro da',
           Icons.calendar_today,
@@ -367,7 +358,6 @@ class _ProfilePageState extends State<ProfilePage>
       ],
     );
   }
-
   Widget _buildInfoField(
     String label,
     IconData icon, {
@@ -376,85 +366,61 @@ class _ProfilePageState extends State<ProfilePage>
     bool isEditable = false,
     int maxLines = 1,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.black26,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.blue.shade800.withOpacity(0.5)),
-      ),
+    return AppComponents.standardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: Colors.blue.shade300, size: 18),
-              const SizedBox(width: 8),
+              Icon(
+                icon, 
+                color: AppDesignSystem.primary, 
+                size: 18,
+              ),
+              const SizedBox(width: AppDesignSystem.paddingS),
               Text(
                 label,
-                style: TextStyle(
-                  color: Colors.blue.shade300,
+                style: AppDesignSystem.bodyMedium.copyWith(
+                  color: AppDesignSystem.primary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDesignSystem.paddingS),
           if (isEditable)
             TextField(
               controller: controller,
               maxLines: maxLines,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
+              style: AppDesignSystem.bodyMedium.copyWith(
+                color: AppDesignSystem.textPrimary,
+              ),
+              decoration: AppDesignSystem.inputDecoration(
                 hintText: 'Inserisci $label',
-                hintStyle: TextStyle(color: Colors.grey[400]),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
               ),
             )
           else
             Text(
               value ?? '',
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: AppDesignSystem.bodyLarge.copyWith(
+                color: AppDesignSystem.textPrimary,
+              ),
             ),
         ],
       ),
     );
   }
-
   Widget _buildStatsTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.timeline,
-            size: 100,
-            color: Colors.blue.shade400.withOpacity(0.7),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Le tue statistiche',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Questa sezione mostrerà le statistiche dei tuoi allenamenti',
-            style: TextStyle(color: Colors.grey[300]),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return AppComponents.emptyState(
+      icon: Icons.timeline,
+      title: 'Le tue statistiche',
+      subtitle: 'Questa sezione mostrerà le statistiche dei tuoi allenamenti',
+      iconColor: AppDesignSystem.primary,
     );
   }
-
   Widget _buildSettingsTab() {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppDesignSystem.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -492,14 +458,17 @@ class _ProfilePageState extends State<ProfilePage>
           const Spacer(),
           Center(
             child: ElevatedButton.icon(
-              icon: const Icon(Icons.logout),
+              icon: const Icon(Icons.logout, size: 18),
               label: const Text('Logout'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade900,
-                foregroundColor: Colors.white,
+                backgroundColor: AppDesignSystem.error,
+                foregroundColor: AppDesignSystem.textPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
+                ),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                  vertical: 15,
+                  horizontal: AppDesignSystem.paddingXL,
+                  vertical: AppDesignSystem.paddingM,
                 ),
               ),
               onPressed: () async {
@@ -516,16 +485,16 @@ class _ProfilePageState extends State<ProfilePage>
         ],
       ),
     );
-  }
-
-  Widget _buildSettingsCategory(String title) {
+  }  Widget _buildSettingsCategory(String title) {
     return Padding(
-      padding: const EdgeInsets.only(top: 20, bottom: 10),
+      padding: const EdgeInsets.only(
+        top: AppDesignSystem.paddingL, 
+        bottom: AppDesignSystem.paddingS,
+      ),
       child: Text(
         title,
-        style: TextStyle(
-          color: Colors.blue.shade300,
-          fontSize: 16,
+        style: AppDesignSystem.bodyLarge.copyWith(
+          color: AppDesignSystem.primary,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -537,19 +506,37 @@ class _ProfilePageState extends State<ProfilePage>
     IconData icon, {
     VoidCallback? onTap,
   }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.blue.shade900.withOpacity(0.3),
-          shape: BoxShape.circle,
+    return AppComponents.standardCard(
+      margin: const EdgeInsets.only(bottom: AppDesignSystem.paddingS),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: AppDesignSystem.paddingS, 
+          horizontal: AppDesignSystem.paddingM,
         ),
-        child: Icon(icon, color: Colors.white, size: 20),
+        leading: Container(
+          padding: const EdgeInsets.all(AppDesignSystem.paddingS),
+          decoration: BoxDecoration(
+            color: AppDesignSystem.primary.withOpacity(0.2),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon, 
+            color: AppDesignSystem.primary, 
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title, 
+          style: AppDesignSystem.bodyMedium.copyWith(
+            color: AppDesignSystem.textPrimary,
+          ),
+        ),
+        trailing: Icon(
+          Icons.chevron_right, 
+          color: AppDesignSystem.textSecondary,
+        ),
+        onTap: onTap,
       ),
-      title: Text(title, style: const TextStyle(color: Colors.white)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.white70),
-      onTap: onTap,
     );
   }
 

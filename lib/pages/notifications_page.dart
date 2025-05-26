@@ -4,6 +4,9 @@ import '../services/friendship_service.dart';
 import '../models/friendship.dart';
 import 'package:intl/intl.dart';
 import 'amici_page.dart';
+import '../theme/app_design_system.dart';
+import '../widgets/app_components.dart';
+import '../widgets/app_background.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -24,55 +27,35 @@ class _NotificationsPageState extends State<NotificationsPage> {
       _friendshipService.markAllNotificationsAsRead();
     });
   }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
-        title: const Text('Notifiche'),
-        backgroundColor: Colors.purple.shade800,
-      ),
-      backgroundColor: Colors.black87,
-      body: StreamBuilder<List<UserNotification>>(
+        title: Text(
+          'Notifiche',
+          style: AppDesignSystem.headingMedium.copyWith(
+            color: AppDesignSystem.textPrimary,
+          ),
+        ),
+        backgroundColor: AppDesignSystem.darkPrimary,
+      ),      body: StreamBuilder<List<UserNotification>>(
         stream: _friendshipService.getAllNotifications(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return AppComponents.loadingIndicator();
           }
 
           final notifications = snapshot.data ?? [];
 
           if (notifications.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.notifications_off,
-                    size: 80,
-                    color: Colors.purple.shade200.withOpacity(0.7),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Nessuna notifica',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white70,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Le tue notifiche appariranno qui',
-                    style: TextStyle(fontSize: 14, color: Colors.white54),
-                  ),
-                ],
-              ),
+            return AppComponents.emptyState(
+              icon: Icons.notifications_off,
+              title: 'Nessuna notifica',
+              subtitle: 'Le tue notifiche appariranno qui',
+              iconColor: AppDesignSystem.accent,
             );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(8),
+          }          return ListView.builder(
+            padding: const EdgeInsets.all(AppDesignSystem.paddingM),
             itemCount: notifications.length,
             itemBuilder: (context, index) {
               final notification = notifications[index];
@@ -85,92 +68,95 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   Widget _buildNotificationItem(UserNotification notification) {
-    final formattedDate = _formatNotificationDate(notification.createdAt);
-
-    IconData notificationIcon;
+    final formattedDate = _formatNotificationDate(notification.createdAt);    IconData notificationIcon;
     Color iconColor;
     switch (notification.type) {
       case NotificationType.friendRequest:
         notificationIcon = Icons.person_add;
-        iconColor = Colors.blue;
+        iconColor = AppDesignSystem.secondary;
         break;
       case NotificationType.friendAccepted:
         notificationIcon = Icons.people;
-        iconColor = Colors.green;
+        iconColor = AppDesignSystem.success;
         break;
       case NotificationType.system:
         notificationIcon = Icons.notifications;
-        iconColor = Colors.amber;
+        iconColor = AppDesignSystem.warning;
         break;
     }
 
     return Dismissible(
-      key: Key(notification.id),
-      background: Container(
+      key: Key(notification.id),      background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20.0),
-        color: Colors.red,
-        child: const Icon(Icons.delete, color: Colors.white),
+        color: AppDesignSystem.error,
+        child: const Icon(Icons.delete, color: AppDesignSystem.textPrimary),
       ),
       direction: DismissDirection.endToStart,
-      confirmDismiss: (direction) async {
-        return await showDialog(
+      confirmDismiss: (direction) async {        return await showDialog(
           context: context,
-          builder:
-              (context) => AlertDialog(
-                backgroundColor: Colors.grey[900],
-                title: const Text(
-                  'Eliminare notifica?',
-                  style: TextStyle(color: Colors.white),
-                ),
-                content: const Text(
-                  'Sei sicuro di voler eliminare questa notifica?',
-                  style: TextStyle(color: Colors.white70),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('Annulla'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text(
-                      'Elimina',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ],
+          builder: (context) => AlertDialog(
+            backgroundColor: AppDesignSystem.darkSecondary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
+            ),
+            title: Text(
+              'Eliminare notifica?',
+              style: AppDesignSystem.headingSmall.copyWith(
+                color: AppDesignSystem.textPrimary,
               ),
+            ),
+            content: Text(
+              'Sei sicuro di voler eliminare questa notifica?',
+              style: AppDesignSystem.bodyMedium.copyWith(
+                color: AppDesignSystem.textSecondary,
+              ),
+            ),            actions: [
+              AppComponents.secondaryButton(
+                text: 'Annulla',
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              const SizedBox(width: AppDesignSystem.paddingS),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: AppDesignSystem.errorButtonStyle,
+                child: Text(
+                  'Elimina',
+                  style: AppDesignSystem.bodyMedium.copyWith(
+                    color: AppDesignSystem.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       },
       onDismissed: (direction) async {
         await _friendshipService.deleteNotification(notification.id);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Notifica eliminata')));
-      },
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        color: Colors.grey.shade900,
-        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-        elevation: 2,
+        ).showSnackBar(const SnackBar(content: Text('Notifica eliminata')));      },
+      child: AppComponents.standardCard(
+        margin: const EdgeInsets.symmetric(
+          vertical: AppDesignSystem.paddingXS,
+          horizontal: 0,
+        ),
         child: ListTile(
-          onTap:
-              notification.type == NotificationType.friendRequest
-                  ? () {
-                    // Naviga alla pagina degli amici sulla tab delle richieste
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => const AmiciPage(initialTabIndex: 1),
-                      ),
-                    );
-                  }
-                  : null,
+          onTap: notification.type == NotificationType.friendRequest
+              ? () {
+                  // Naviga alla pagina degli amici sulla tab delle richieste
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AmiciPage(initialTabIndex: 1),
+                    ),
+                  );
+                }
+              : null,
           contentPadding: const EdgeInsets.symmetric(
-            vertical: 8,
-            horizontal: 16,
+            vertical: AppDesignSystem.paddingS,
+            horizontal: AppDesignSystem.paddingM,
           ),
           leading: CircleAvatar(
             backgroundColor: iconColor.withOpacity(0.2),
@@ -178,23 +164,23 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ),
           title: Text(
             notification.message,
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight:
-                  notification.isRead ? FontWeight.normal : FontWeight.bold,
+            style: AppDesignSystem.bodyMedium.copyWith(
+              color: AppDesignSystem.textPrimary,
+              fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
             ),
           ),
           subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: AppDesignSystem.paddingXS),
             child: Text(
               formattedDate,
-              style: const TextStyle(color: Colors.white60, fontSize: 12),
+              style: AppDesignSystem.bodySmall.copyWith(
+                color: AppDesignSystem.textTertiary,
+              ),
             ),
           ),
-          trailing:
-              notification.type == NotificationType.friendRequest
-                  ? _buildFriendRequestActions(notification)
-                  : null,
+          trailing: notification.type == NotificationType.friendRequest
+              ? _buildFriendRequestActions(notification)
+              : null,
         ),
       ),
     );
@@ -232,26 +218,23 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
         return Row(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            _actionButton(
+          children: [            _actionButton(
               icon: Icons.check,
-              color: Colors.green,
-              onPressed:
-                  () => _respondToFriendRequest(
-                    request.id,
-                    FriendshipStatus.accepted,
-                  ),
+              color: AppDesignSystem.success,
+              onPressed: () => _respondToFriendRequest(
+                request.id,
+                FriendshipStatus.accepted,
+              ),
               tooltip: 'Accetta',
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppDesignSystem.paddingXS),
             _actionButton(
               icon: Icons.close,
-              color: Colors.red,
-              onPressed:
-                  () => _respondToFriendRequest(
-                    request.id,
-                    FriendshipStatus.rejected,
-                  ),
+              color: AppDesignSystem.error,
+              onPressed: () => _respondToFriendRequest(
+                request.id,
+                FriendshipStatus.rejected,
+              ),
               tooltip: 'Rifiuta',
             ),
           ],
@@ -265,11 +248,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
     required Color color,
     required VoidCallback onPressed,
     required String tooltip,
-  }) {
-    return Container(
+  }) {    return Container(
       decoration: BoxDecoration(
         color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
       ),
       child: IconButton(
         icon: Icon(icon, color: color),

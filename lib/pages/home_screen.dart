@@ -13,6 +13,9 @@ import '../widgets/notification_badge.dart';
 import '../widgets/level_up_celebration.dart';
 import '../services/mission_service.dart';
 import '../models/player_level.dart';
+import '../theme/app_design_system.dart';
+import '../widgets/app_components.dart';
+import '../widgets/app_background.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialTab;
@@ -114,13 +117,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       _selectedIndex = index;
     });
-  }
-
-  @override
+  }  @override
   Widget build(BuildContext context) {
     Widget allenamentoTab() {
       if (schedaId == null) {
-        return const Center(child: CircularProgressIndicator());
+        return AppComponents.loadingIndicator();
       }
       return SchedaAllenamentoPage(schedaId: schedaId!);
     }
@@ -133,13 +134,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       const ProfilePage(),
     ];
 
-    return Scaffold(
-      backgroundColor: Colors.black87,
+    return AppScaffold(
       bottomNavigationBar: _buildNavigationBar(),
       body: Stack(
         children: [
-          _buildBackground(),
-          _buildStarfieldAnimation(),
           IndexedStack(index: _selectedIndex, children: pageOptions),
 
           // Monitoraggio livello per celebration
@@ -172,42 +170,43 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
   Widget _buildNavigationBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: AppDesignSystem.darkPrimary,
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
+            color: AppDesignSystem.primary.withOpacity(0.3),
             blurRadius: 10,
             spreadRadius: -3,
           ),
         ],
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(AppDesignSystem.radiusL),
+          topRight: Radius.circular(AppDesignSystem.radiusL),
         ),
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(AppDesignSystem.radiusL),
+          topRight: Radius.circular(AppDesignSystem.radiusL),
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: _onNavItemTapped,
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.black,
-          selectedItemColor: Colors.blue,
-          unselectedItemColor: Colors.grey,
+          backgroundColor: AppDesignSystem.darkPrimary,
+          selectedItemColor: AppDesignSystem.primary,
+          unselectedItemColor: AppDesignSystem.textTertiary,
           showSelectedLabels: true,
           showUnselectedLabels: true,
-          selectedLabelStyle: const TextStyle(
+          selectedLabelStyle: AppDesignSystem.bodySmall.copyWith(
             fontWeight: FontWeight.bold,
-            fontSize: 12,
+            color: AppDesignSystem.primary,
           ),
-          unselectedLabelStyle: const TextStyle(fontSize: 11),
+          unselectedLabelStyle: AppDesignSystem.bodySmall.copyWith(
+            color: AppDesignSystem.textTertiary,
+          ),
           items: [
             const BottomNavigationBarItem(
               icon: Icon(Icons.home_rounded),
@@ -223,22 +222,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 width: 56,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Colors.blue.shade700, Colors.blue.shade900],
-                  ),
+                  gradient: AppDesignSystem.primaryButtonGradient,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.4),
+                      color: AppDesignSystem.primary.withOpacity(0.4),
                       spreadRadius: 1,
                       blurRadius: 8,
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.fitness_center,
-                  color: Colors.white,
+                  color: AppDesignSystem.textPrimary,
                   size: 26,
                 ),
               ),
@@ -255,34 +250,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildBackground() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.indigo.shade900, Colors.black],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStarfieldAnimation() {
-    return AnimatedBuilder(
-      animation: _particleAnimationController,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: StarfieldPainter(
-            animation: _particleAnimationController.value,
-          ),
-          size: Size.infinite,
-        );
-      },
-    );
-  }
+    );}
 
   Widget _buildMainContent() {
     return SafeArea(
@@ -295,34 +263,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ],
       ),
     );
-  }
-
-  Widget _buildHeader() {
+  }  Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 15, 20, 5),
+      padding: const EdgeInsets.all(AppDesignSystem.paddingL),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            "${user.email?.split('@').first ?? 'Player'}",
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              shadows: [
-                Shadow(
-                  blurRadius: 10.0,
-                  color: Colors.blue,
-                  offset: Offset(0, 0),
-                ),
-              ],
+          Expanded(
+            child: Text(
+              user.email?.split('@').first ?? 'Player',
+              style: AppDesignSystem.headingLarge.copyWith(
+                shadows: [
+                  Shadow(
+                    blurRadius: 10.0,
+                    color: AppDesignSystem.primary,
+                    offset: const Offset(0, 0),
+                  ),
+                ],
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
           Row(
-            children: [
-              // Pulsante Chat
-              GestureDetector(
-                onTap: () {
+            children: [              // Pulsante Chat
+              AppComponents.iconButton(
+                icon: Icons.chat_bubble_outline,
+                onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -330,29 +297,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ),
                   );
                 },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.teal.shade800,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.teal.withOpacity(0.4),
-                        spreadRadius: 1,
-                        blurRadius: 8,
-                        offset: const Offset(0, 0),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.chat_bubble_outline,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
+                iconColor: AppDesignSystem.accent,
+                tooltip: 'Chat',
               ),
-              // Pulsante Notifiche con badge
+              const SizedBox(width: AppDesignSystem.paddingS),              // Pulsante Notifiche con badge
               NotificationBadge(
                 onTap: () {
                   Navigator.push(
@@ -365,62 +313,43 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   });
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.only(right: 10),
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade800,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.amber.withOpacity(0.4),
-                        spreadRadius: 1,
-                        blurRadius: 8,
-                        offset: const Offset(0, 0),
-                      ),
-                    ],
+                    color: AppDesignSystem.primary.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppDesignSystem.primary.withOpacity(0.5),
+                      width: 1,
+                    ),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.notifications_active,
-                    color: Colors.white,
-                    size: 22,
+                    color: AppDesignSystem.warning,
+                    size: 20,
                   ),
                 ),
               ),
-              // Pulsante Amici
-              GestureDetector(
-                onTap: () {
+              const SizedBox(width: AppDesignSystem.paddingS),
+                // Pulsante Amici
+              AppComponents.iconButton(
+                icon: Icons.people_alt_rounded,
+                onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const AmiciPage()),
                   );
                 },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.shade800,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.purple.withOpacity(0.4),
-                        spreadRadius: 1,
-                        blurRadius: 8,
-                        offset: const Offset(0, 0),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.people_alt_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
-              ), // Livello utente
+                iconColor: AppDesignSystem.secondary,
+                tooltip: 'Amici',
+              ),
+              const SizedBox(width: AppDesignSystem.paddingS),
+              
+              // Livello utente
               StreamBuilder<PlayerLevel>(
                 stream: _missionService.getUserLevelStream(),
                 builder: (context, snapshot) {
-                  final playerLevel =
-                      snapshot.data ??
+                  final playerLevel = snapshot.data ??
                       PlayerLevel(
                         level: 1,
                         currentExp: 0,
@@ -430,29 +359,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                   return Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: AppDesignSystem.paddingM,
+                      vertical: AppDesignSystem.paddingS,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade800,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.blue.withOpacity(0.5),
-                          spreadRadius: 1,
-                          blurRadius: 8,
-                          offset: const Offset(0, 0),
-                        ),
-                      ],
+                      gradient: AppDesignSystem.primaryButtonGradient,
+                      borderRadius: BorderRadius.circular(AppDesignSystem.radiusL),
+                      boxShadow: AppDesignSystem.shadowM,
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 20),
-                        const SizedBox(width: 4),
-                        Text(
+                        const Icon(
+                          Icons.star,
+                          color: AppDesignSystem.warning,
+                          size: 20,
+                        ),
+                        const SizedBox(width: AppDesignSystem.paddingXS),                        Text(
                           "LV ${playerLevel.level}",
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: AppDesignSystem.bodyMedium.copyWith(
+                            color: AppDesignSystem.textPrimary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -467,7 +392,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
   Widget _buildExperienceBar() {
     return StreamBuilder<PlayerLevel>(
       stream: _missionService.getUserLevelStream(),
@@ -482,14 +406,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             );
 
         return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 5, 20, 20),
+          padding: const EdgeInsets.fromLTRB(
+            AppDesignSystem.paddingL, 
+            AppDesignSystem.paddingXS, 
+            AppDesignSystem.paddingL, 
+            AppDesignSystem.paddingL
+          ),
           child: Stack(
             children: [
               Container(
                 height: 6,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade800,
-                  borderRadius: BorderRadius.circular(10),
+                  color: AppDesignSystem.cardBackgroundSecondary,
+                  borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
                 ),
               ),
               LayoutBuilder(
@@ -504,7 +433,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             playerLevel.progressPercentage,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Colors.blue, Colors.purple, Colors.blue],
+                            colors: [AppDesignSystem.primary, AppDesignSystem.secondary, AppDesignSystem.primary],
                             stops: const [0.0, 0.5, 1.0],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
@@ -512,10 +441,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               _experienceBarAnimation.value * 2 * math.pi,
                             ),
                           ),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.blue.withOpacity(
+                              color: AppDesignSystem.primary.withOpacity(
                                 0.5 + _experienceBarAnimation.value * 0.2,
                               ),
                               spreadRadius: 1,
@@ -534,7 +463,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       },
     );
   }
-
   Widget _buildCharacterSection() {
     return Expanded(
       child: Center(
@@ -549,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blue.withOpacity(0.3),
+                    color: AppDesignSystem.primary.withOpacity(0.3),
                     spreadRadius: 10,
                     blurRadius: 20,
                   ),
@@ -559,14 +487,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 characterAsset,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.blue,
+                      color: AppDesignSystem.primary,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.fitness_center,
                       size: 150,
-                      color: Colors.white,
+                      color: AppDesignSystem.textPrimary,
                     ),
                   );
                 },
@@ -577,7 +505,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
   Widget _buildDailyChallenge() {
     return StreamBuilder<PlayerLevel>(
       stream: _missionService.getUserLevelStream(),
@@ -592,56 +519,35 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             );
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.blue.shade900.withOpacity(0.7),
-                  Colors.purple.shade900.withOpacity(0.7),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blue.withOpacity(0.2),
-                  blurRadius: 10,
-                  spreadRadius: 0,
-                ),
-              ],
-              border: Border.all(
-                color: Colors.white.withOpacity(0.1),
-                width: 1,
-              ),
-            ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDesignSystem.paddingL, 
+            vertical: AppDesignSystem.paddingL
+          ),
+          child: AppComponents.standardCard(
+            hasPrimaryAccent: true,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(AppDesignSystem.paddingS),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
+                        color: AppDesignSystem.warning.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.emoji_events,
-                        color: Colors.amber,
+                        color: AppDesignSystem.warning,
                         size: 22,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(
+                    const SizedBox(width: AppDesignSystem.paddingM),
+                    Expanded(
                       child: Text(
                         "Sfide Attive",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                        style: AppDesignSystem.headingMedium.copyWith(
+                          color: AppDesignSystem.textPrimary,
                         ),
                       ),
                     ),
@@ -653,40 +559,41 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                          horizontal: AppDesignSystem.paddingS,
+                          vertical: AppDesignSystem.paddingXS,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(12),
+                          color: AppDesignSystem.success.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
                         ),
-                        child: const Text(
+                        child: Text(
                           "VEDI TUTTE",
-                          style: TextStyle(
-                            color: Colors.greenAccent,
+                          style: AppDesignSystem.bodySmall.copyWith(
+                            color: AppDesignSystem.success,
                             fontWeight: FontWeight.bold,
-                            fontSize: 12,
                           ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppDesignSystem.paddingM),
                 Text(
                   "Completa missioni per accumulare ${playerLevel.expToNextLevel} XP e salire al livello ${playerLevel.level + 1}",
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  style: AppDesignSystem.bodyMedium.copyWith(
+                    color: AppDesignSystem.textSecondary,
+                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppDesignSystem.paddingM),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
                   child: Stack(
                     children: [
                       LinearProgressIndicator(
                         value: playerLevel.progressPercentage,
                         minHeight: 10,
-                        backgroundColor: Colors.grey.shade800,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
+                        backgroundColor: AppDesignSystem.cardBackgroundSecondary,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppDesignSystem.warning),
                       ),
                       // Animazione brillante sopra la barra di progresso
                       AnimatedBuilder(
@@ -706,7 +613,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   gradient: LinearGradient(
                                     colors: [
                                       Colors.transparent,
-                                      Colors.white.withOpacity(0.2),
+                                      AppDesignSystem.textPrimary.withOpacity(0.2),
                                       Colors.transparent,
                                     ],
                                     stops: const [0.0, 0.5, 1.0],
@@ -727,10 +634,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppDesignSystem.paddingS),
                 Text(
                   "${playerLevel.currentExp}/${playerLevel.currentExp + playerLevel.expToNextLevel} XP",
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  style: AppDesignSystem.bodySmall.copyWith(
+                    color: AppDesignSystem.textTertiary,
+                  ),
                   textAlign: TextAlign.end,
                 ),
               ],
@@ -785,102 +694,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       // Se è il primo accesso, imposta l'ultimo livello mostrato
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
         {'lastShownLevel': currentLevel.level},
-      );
-    }
+      );    }
   }
-}
-
-class StarfieldPainter extends CustomPainter {
-  final double animation;
-
-  StarfieldPainter({required this.animation});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    _drawNebulosities(canvas, size);
-    _drawTwinklingStars(canvas, size);
-  }
-
-  void _drawNebulosities(Canvas canvas, Size size) {
-    final seed = 12345;
-    final random = math.Random(seed);
-
-    for (int i = 0; i < 4; i++) {
-      final baseX = random.nextDouble() * size.width;
-      final baseY = random.nextDouble() * size.height;
-
-      final offsetX = math.sin(animation * 0.01 + i) * 20;
-      final offsetY = math.cos(animation * 0.008 + i * 0.5) * 15;
-
-      final x = (baseX + offsetX) % size.width;
-      final y = (baseY + offsetY) % size.height;
-
-      final radius = 100.0 + random.nextDouble() * 150;
-      final colors = [
-        Colors.blue.withOpacity(0.03),
-        Colors.purple.withOpacity(0.04),
-        Colors.indigo.withOpacity(0.03),
-        Colors.cyan.withOpacity(0.02),
-      ];
-      final color = colors[i % colors.length];
-
-      final gradient = RadialGradient(
-        center: Alignment.center,
-        radius: 1.0,
-        colors: [color, color.withOpacity(0.0)],
-        stops: const [0.2, 1.0],
-      );
-
-      final rect = Rect.fromCircle(center: Offset(x, y), radius: radius);
-      final paint = Paint()..shader = gradient.createShader(rect);
-
-      canvas.drawCircle(Offset(x, y), radius, paint);
-    }
-  }
-
-  void _drawTwinklingStars(Canvas canvas, Size size) {
-    final paint = Paint()..strokeCap = StrokeCap.round;
-    final seed = 54321;
-    final random = math.Random(seed);
-
-    for (int i = 0; i < 150; i++) {
-      final x = random.nextDouble() * size.width;
-      final y = random.nextDouble() * size.height;
-
-      final baseStarSize = 0.5 + random.nextDouble() * 1.5;
-      final phase = random.nextDouble() * math.pi * 2;
-      final twinkleSpeed = 0.2 + random.nextDouble() * 0.3;
-      final twinkle =
-          0.4 + 0.6 * (0.5 + 0.5 * math.sin(animation * twinkleSpeed + phase));
-      final starSize = baseStarSize * (0.8 + 0.2 * twinkle);
-
-      Color starColor;
-      final colorSeed = random.nextInt(100);
-      if (colorSeed < 5) {
-        starColor = Colors.lightBlueAccent.withOpacity(0.6 * twinkle);
-      } else if (colorSeed < 10) {
-        starColor = Colors.purpleAccent.withOpacity(0.5 * twinkle);
-      } else if (colorSeed < 15) {
-        starColor = Colors.amberAccent.withOpacity(0.5 * twinkle);
-      } else if (colorSeed < 17) {
-        starColor = Colors.redAccent.withOpacity(0.4 * twinkle);
-      } else {
-        starColor = Colors.white.withOpacity(0.3 * twinkle);
-      }
-
-      canvas.drawCircle(Offset(x, y), starSize, paint..color = starColor);
-
-      if (colorSeed < 20) {
-        canvas.drawCircle(
-          Offset(x, y),
-          starSize * 2,
-          paint..color = starColor.withOpacity(0.1 * twinkle),
-        );
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant StarfieldPainter oldDelegate) =>
-      oldDelegate.animation != animation;
 }

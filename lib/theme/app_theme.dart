@@ -1,65 +1,99 @@
 import 'package:flutter/material.dart';
+import 'app_design_system.dart';
 
 class AppTheme {
-  // Primary colors
-  static const Color primaryColor = Color(0xFF0D47A1);
-  static const Color accentColor = Color(0xFF42A5F5);
+  // Utilizza i colori dal design system unificato
+  static const Color primaryColor = AppDesignSystem.primary;
+  static const Color accentColor = AppDesignSystem.secondary;
 
-  // Background colors
-  static const Color scaffoldColor = Color(0xFFF5F5F5);
-  static const Color cardColor = Colors.white;
+  // Background colors per modalità scura
+  static const Color scaffoldColor = AppDesignSystem.darkPrimary;
+  static const Color cardColor = AppDesignSystem.darkSecondary;
 
   // Text colors
-  static const Color textPrimaryColor = Color(0xFF303030);
-  static const Color textSecondaryColor = Color(0xFF757575);
+  static const Color textPrimaryColor = AppDesignSystem.textPrimary;
+  static const Color textSecondaryColor = AppDesignSystem.textSecondary;
 
   // Button colors
   static const Color buttonColor = primaryColor;
   static const Color buttonTextColor = Colors.white;
 
   // Status colors
-  static const Color successColor = Color(0xFF4CAF50);
-  static const Color errorColor = Color(0xFFE53935);
-  static const Color warningColor = Color(0xFFFFB300);
+  static const Color successColor = AppDesignSystem.success;
+  static const Color errorColor = AppDesignSystem.error;
+  static const Color warningColor = AppDesignSystem.warning;
 
   // Create and return the theme data
   static ThemeData getTheme() {
     return ThemeData(
       primaryColor: primaryColor,
-      scaffoldBackgroundColor: scaffoldColor,
+      scaffoldBackgroundColor: scaffoldColor,      useMaterial3: true,
+      brightness: Brightness.dark,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         secondary: accentColor,
+        brightness: Brightness.dark,
+        surface: cardColor,
+        background: scaffoldColor,
       ),
       fontFamily: 'Poppins',
-      textTheme: const TextTheme(
-        headlineLarge: TextStyle(
-          color: textPrimaryColor,
-          fontSize: 26,
-          fontWeight: FontWeight.bold,
-        ),
-        headlineMedium: TextStyle(
-          color: textPrimaryColor,
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-        ),
-        bodyLarge: TextStyle(color: textPrimaryColor, fontSize: 16),
-        bodyMedium: TextStyle(color: textSecondaryColor, fontSize: 14),
+      textTheme: TextTheme(
+        headlineLarge: AppDesignSystem.headingLarge,
+        headlineMedium: AppDesignSystem.headingMedium,
+        headlineSmall: AppDesignSystem.headingSmall,
+        bodyLarge: AppDesignSystem.bodyLarge,
+        bodyMedium: AppDesignSystem.bodyMedium,
+        bodySmall: AppDesignSystem.bodySmall,
+        labelSmall: AppDesignSystem.caption,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: buttonColor,
-          foregroundColor: buttonTextColor,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+        style: AppDesignSystem.primaryButtonStyle,
+      ),
+      cardTheme: CardThemeData(
+        color: cardColor,
+        elevation: AppDesignSystem.elevationM,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
         ),
       ),
-      cardTheme: CardTheme(
-        color: cardColor,
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppDesignSystem.cardBackgroundSecondary,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
+          borderSide: BorderSide(color: primaryColor, width: 1.5),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.1), width: 1),
+        ),
+        hintStyle: AppDesignSystem.bodyMedium.copyWith(
+          color: AppDesignSystem.textTertiary,
+        ),
+        labelStyle: AppDesignSystem.bodyMedium,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        foregroundColor: textPrimaryColor,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: AppDesignSystem.headingMedium,
+        surfaceTintColor: Colors.transparent,
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: AppDesignSystem.darkSecondary,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: AppDesignSystem.textTertiary,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+        selectedLabelStyle: AppDesignSystem.bodySmall.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: AppDesignSystem.bodySmall,
       ),
     );
   }

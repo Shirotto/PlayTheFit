@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'home_screen.dart'; // Assicurati che il path sia corretto
+import 'home_screen.dart';
+import '../theme/app_design_system.dart';
+import '../widgets/app_components.dart';
+import '../widgets/app_background.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -31,14 +34,20 @@ class _SignupPageState extends State<SignupPage> {
       'data_creazione': FieldValue.serverTimestamp(),
     });
   }
-
   void showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red.shade900,
+        content: Text(
+          message,
+          style: AppDesignSystem.bodyMedium.copyWith(
+            color: AppDesignSystem.textPrimary,
+          ),
+        ),
+        backgroundColor: AppDesignSystem.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
+        ),
       ),
     );
   }
@@ -78,58 +87,121 @@ class _SignupPageState extends State<SignupPage> {
       showError(e.message ?? "Errore durante la registrazione");
     }
   }
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    bool isPassword = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppDesignSystem.surfaceOverlay,
+        borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
+        border: Border.all(
+          color: AppDesignSystem.primary.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: isPassword,
+        style: AppDesignSystem.bodyMedium.copyWith(
+          color: AppDesignSystem.textPrimary,
+        ),
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, color: AppDesignSystem.primary),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppDesignSystem.paddingL,
+            vertical: AppDesignSystem.paddingM,
+          ),
+          hintText: label,
+          hintStyle: AppDesignSystem.bodyMedium.copyWith(
+            color: AppDesignSystem.textTertiary,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
-        title: const Text('Registrazione'),
-        backgroundColor: Colors.blue,
+        title: Text(
+          'Registrazione',
+          style: AppDesignSystem.headingMedium.copyWith(
+            color: AppDesignSystem.textPrimary,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppDesignSystem.textPrimary,
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nome',
-                  border: OutlineInputBorder(),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppDesignSystem.paddingL),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: AppDesignSystem.paddingL),
+                
+                // Header section
+                Text(
+                  'Crea il tuo account',
+                  style: AppDesignSystem.headingLarge.copyWith(
+                    color: AppDesignSystem.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: AppDesignSystem.paddingS),
+                Text(
+                  'Inizia il tuo viaggio fitness con PlayTheFit',
+                  style: AppDesignSystem.bodyMedium.copyWith(
+                    color: AppDesignSystem.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: AppDesignSystem.paddingXL),
+                
+                // Form fields
+                _buildTextField(
+                  nameController,
+                  'Nome',
+                  Icons.person,
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: confirmPasswordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Conferma Password',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: AppDesignSystem.paddingM),
+                _buildTextField(
+                  emailController,
+                  'Email',
+                  Icons.email,
                 ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _signUp,
-                child: const Text('Crea Account'),
-              ),
-            ],
+                const SizedBox(height: AppDesignSystem.paddingM),
+                _buildTextField(
+                  passwordController,
+                  'Password',
+                  Icons.lock,
+                  isPassword: true,
+                ),
+                const SizedBox(height: AppDesignSystem.paddingM),
+                _buildTextField(
+                  confirmPasswordController,
+                  'Conferma Password',
+                  Icons.lock_outline,
+                  isPassword: true,
+                ),
+                const SizedBox(height: AppDesignSystem.paddingXL),
+                
+                // Action button
+                AppComponents.primaryButton(
+                  text: 'Crea Account',
+                  onPressed: _signUp,
+                  fullWidth: true,
+                  icon: Icons.person_add,
+                ),
+              ],
+            ),
           ),
         ),
       ),

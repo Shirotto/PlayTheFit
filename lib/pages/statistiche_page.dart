@@ -1,29 +1,30 @@
 import 'package:flutter/material.dart';
+import '../theme/app_design_system.dart';
+import '../widgets/app_components.dart';
+import '../widgets/app_background.dart';
 
 class StatistichePage extends StatelessWidget {
   const StatistichePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Statistiche'),
-        backgroundColor: Colors.indigo.shade900,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.indigo.shade900, Colors.black],
+    return AppScaffold(
+      body: Column(
+        children: [
+          AppComponents.pageHeader(
+            title: '📊 STATISTICHE',
+            subtitle: 'Traccia i tuoi progressi',
+            icon: Icons.analytics,
           ),
-        ),
-        child: const Center(
-          child: Text(
-            'Pagina Statistiche - In Costruzione',
-            style: TextStyle(fontSize: 20, color: Colors.white),
+          Expanded(
+            child: AppComponents.emptyState(
+              icon: Icons.construction,
+              title: 'In Costruzione',
+              subtitle: 'La pagina delle statistiche sarà presto disponibile',
+              iconColor: AppDesignSystem.warning,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

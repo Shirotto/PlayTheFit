@@ -4,6 +4,9 @@ import '../services/chat_service.dart';
 import 'chat_detail_page.dart';
 import '../services/auth_service.dart';
 import 'package:intl/intl.dart';
+import '../theme/app_design_system.dart';
+import '../widgets/app_components.dart';
+import '../widgets/app_background.dart';
 
 class ChatListPage extends StatefulWidget {
   const ChatListPage({super.key});
@@ -40,31 +43,34 @@ class _ChatListPageState extends State<ChatListPage> {
       print('Errore nel caricare le chat: $e');
     }
   }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
-        title: const Text('Chat'),
-        backgroundColor: Colors.purple.shade800,
+        title: Text(
+          'Chat',
+          style: AppDesignSystem.headingMedium.copyWith(
+            color: AppDesignSystem.textPrimary,
+          ),
+        ),
+        backgroundColor: AppDesignSystem.darkPrimary,
         actions: [
           // Aggiungi un pulsante di refresh per ricaricare le chat
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Aggiorna',
+          AppComponents.iconButton(
+            icon: Icons.refresh,
             onPressed: () {
               setState(() {}); // Forza il ricaricamento del widget
             },
+            tooltip: 'Aggiorna',
+            iconColor: AppDesignSystem.textPrimary,
           ),
         ],
       ),
-      backgroundColor: Colors.black87,
       body: StreamBuilder<List<Chat>>(
         stream: _chatService.getUserChats(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting &&
+        builder: (context, snapshot) {          if (snapshot.connectionState == ConnectionState.waiting &&
               _cachedChats.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return AppComponents.loadingIndicator();
           }
 
           // Se abbiamo un errore ma abbiamo dati in cache, mostriamo quelli
@@ -75,23 +81,25 @@ class _ChatListPageState extends State<ChatListPage> {
               final currentUserId = _authService.currentUser?.uid;
 
               return Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    color: Colors.amber.withOpacity(0.3),
+                children: [                  Container(
+                    padding: const EdgeInsets.all(AppDesignSystem.paddingS),
+                    color: AppDesignSystem.warning.withOpacity(0.3),
                     child: Row(
                       children: [
-                        const Icon(Icons.warning, color: Colors.amber),
+                        Icon(Icons.warning, color: AppDesignSystem.warning),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: const Text(
+                          child: Text(
                             'Visualizzando chat in modalità offline. Alcune conversazioni potrebbero non essere aggiornate.',
-                            style: TextStyle(color: Colors.white),
+                            style: AppDesignSystem.bodyMedium.copyWith(
+                              color: AppDesignSystem.textPrimary,
+                            ),
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.refresh, color: Colors.white),
+                        AppComponents.iconButton(
+                          icon: Icons.refresh,
                           onPressed: () => setState(() {}),
+                          iconColor: AppDesignSystem.textPrimary,
                         ),
                       ],
                     ),
@@ -99,31 +107,17 @@ class _ChatListPageState extends State<ChatListPage> {
                   Expanded(child: _buildChatList(chats, currentUserId!)),
                 ],
               );
-            } else {
-              // Se non abbiamo cache, mostra l'errore
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 60,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Errore nel caricamento delle chat',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed:
-                          () => setState(() {
-                            _loadChats();
-                          }),
-                      child: const Text('Riprova'),
-                    ),
-                  ],
+            } else {              // Se non abbiamo cache, mostra l'errore
+              return AppComponents.emptyState(
+                icon: Icons.error_outline,
+                title: 'Errore nel caricamento delle chat',
+                subtitle: 'Verifica la connessione e riprova',
+                iconColor: AppDesignSystem.error,
+                action: AppComponents.primaryButton(
+                  text: 'Riprova',
+                  onPressed: () => setState(() {
+                    _loadChats();
+                  }),
                 ),
               );
             }
@@ -145,11 +139,10 @@ class _ChatListPageState extends State<ChatListPage> {
       ),
     );
   }
-
   // Metodo per costruire la lista delle chat
   Widget _buildChatList(List<Chat> chats, String currentUserId) {
     return ListView.builder(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(AppDesignSystem.paddingS),
       itemCount: chats.length,
       itemBuilder: (context, index) {
         final chat = chats[index];
@@ -168,34 +161,12 @@ class _ChatListPageState extends State<ChatListPage> {
       },
     );
   }
-
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 80,
-            color: Colors.purple.shade200.withOpacity(0.7),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Nessuna chat',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.white70,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Inizia a chattare con i tuoi amici',
-            style: TextStyle(fontSize: 14, color: Colors.white54),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return AppComponents.emptyState(
+      icon: Icons.chat_bubble_outline,
+      title: 'Nessuna chat',
+      subtitle: 'Inizia a chattare con i tuoi amici',
+      iconColor: AppDesignSystem.secondary,
     );
   }
 
@@ -208,119 +179,109 @@ class _ChatListPageState extends State<ChatListPage> {
   ) {
     final currentUserId = _authService.currentUser?.uid;
     final isLastMessageFromMe = chat.lastMessageSenderId == currentUserId;
-    final lastMessageTime = _formatChatTime(chat.lastMessageTime);
-
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: isUnread ? Colors.purple.shade900 : Colors.grey.shade900,
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-      elevation: 2,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (context) => ChatDetailPage(
-                    chatId: chat.id,
-                    receiverId: otherUserId,
-                    receiverName: otherUserName,
+    final lastMessageTime = _formatChatTime(chat.lastMessageTime);    return Container(
+      margin: const EdgeInsets.symmetric(
+        vertical: AppDesignSystem.paddingXS, 
+        horizontal: AppDesignSystem.paddingXS
+      ),
+      child: AppComponents.standardCard(
+        hasPrimaryAccent: isUnread,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => ChatDetailPage(
+                      chatId: chat.id,
+                      receiverId: otherUserId,
+                      receiverName: otherUserName,
+                    ),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
+          child: Padding(
+            padding: const EdgeInsets.all(AppDesignSystem.paddingM),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 25,
+                  backgroundColor: AppDesignSystem.primary,
+                  child: Text(
+                    otherUserName.substring(0, 1).toUpperCase(),
+                    style: AppDesignSystem.headingSmall.copyWith(
+                      color: AppDesignSystem.textPrimary,
+                    ),
                   ),
+                ),
+                const SizedBox(width: AppDesignSystem.paddingM),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            otherUserName,
+                            style: AppDesignSystem.bodyLarge.copyWith(
+                              fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                          Text(
+                            lastMessageTime,
+                            style: AppDesignSystem.bodySmall,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppDesignSystem.paddingXS),
+                      Row(
+                        children: [
+                          if (isLastMessageFromMe)
+                            Padding(
+                              padding: const EdgeInsets.only(right: AppDesignSystem.paddingXS),
+                              child: Icon(
+                                Icons.done_all,
+                                size: 14,
+                                color: isUnread 
+                                    ? AppDesignSystem.textTertiary
+                                    : AppDesignSystem.primary,
+                              ),
+                            ),
+                          Expanded(
+                            child: Text(
+                              chat.lastMessageContent ?? 'Nuova chat',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppDesignSystem.bodyMedium.copyWith(
+                                color: isUnread 
+                                    ? AppDesignSystem.textPrimary
+                                    : AppDesignSystem.textSecondary,
+                                fontWeight: isUnread 
+                                    ? FontWeight.bold 
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          if (isUnread)
+                            Container(
+                              margin: const EdgeInsets.only(left: AppDesignSystem.paddingS),
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: AppDesignSystem.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 25,
-                backgroundColor: Colors.blue.shade400,
-                child: Text(
-                  otherUserName.substring(0, 1).toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          otherUserName,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight:
-                                isUnread ? FontWeight.bold : FontWeight.normal,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text(
-                          lastMessageTime,
-                          style: TextStyle(
-                            color: Colors.grey.shade400,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        if (isLastMessageFromMe)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 4),
-                            child: Icon(
-                              Icons.done_all,
-                              size: 14,
-                              color:
-                                  isUnread
-                                      ? Colors.grey.shade400
-                                      : Colors.blue.shade400,
-                            ),
-                          ),
-                        Expanded(
-                          child: Text(
-                            chat.lastMessageContent ?? 'Nuova chat',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color:
-                                  isUnread
-                                      ? Colors.white
-                                      : Colors.grey.shade300,
-                              fontWeight:
-                                  isUnread
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                        if (isUnread)
-                          Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade400,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ),
       ),

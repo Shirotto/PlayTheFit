@@ -3,14 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math' as math;
 
-// Import componenti
-import '../Components/heading.dart';
-import '../Components/card_button.dart';
-import '../Components/custom_container.dart';
-import '../Components/social_media_icons.dart';
 import 'home_screen.dart';
 import '../services/auth_service.dart';
 import 'scheda_allenamento_page.dart';
+import '../theme/app_design_system.dart';
+import '../widgets/app_components.dart';
+import '../widgets/app_background.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -21,12 +19,10 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
   bool signup = false;
-
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final AuthService _authService = AuthService();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   late AnimationController _animationController;
@@ -48,208 +44,160 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
     _animationController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      resizeToAvoidBottomInset: false,
-      body: Stack(
-        children: [
-          // Sfondo con gradiente
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.indigo.shade900, Colors.black],
+    return AppScaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            SizedBox(height: AppDesignSystem.paddingL),
+            Image.asset(
+              'assets/images/logo.png',
+              height: 80,
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(
+                  Icons.rocket_launch,
+                  size: 80,
+                  color: AppDesignSystem.textSecondary,
+                );
+              },
+            ),
+            SizedBox(height: AppDesignSystem.paddingL),
+            Expanded(
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: AppDesignSystem.paddingL),
+                padding: EdgeInsets.symmetric(horizontal: AppDesignSystem.paddingL),
+                decoration: BoxDecoration(
+                  color: AppDesignSystem.cardBackground,
+                  borderRadius: BorderRadius.circular(AppDesignSystem.radiusXL),
+                  border: Border.all(
+                    color: AppDesignSystem.primary.withOpacity(0.3),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppDesignSystem.primary.withOpacity(0.2),
+                      blurRadius: AppDesignSystem.elevationL,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(height: AppDesignSystem.paddingL),
+                    Text(
+                      signup ? "Registrati" : "Accedi",
+                      style: AppDesignSystem.headingLarge.copyWith(
+                        color: AppDesignSystem.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: AppDesignSystem.paddingS),
+                    Text(
+                      signup
+                          ? "Crea un nuovo account"
+                          : "Bentornato nel tuo spazio fitness",
+                      style: AppDesignSystem.bodyMedium.copyWith(
+                        color: AppDesignSystem.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: AppDesignSystem.paddingXL),
+                    _buildSocialLoginButtons(),
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: AppDesignSystem.paddingL),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Divider(
+                              color: AppDesignSystem.textTertiary.withOpacity(0.5),
+                              thickness: 1,
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: AppDesignSystem.paddingS),
+                            child: Text(
+                              "oppure",
+                              style: AppDesignSystem.bodyMedium.copyWith(
+                                color: AppDesignSystem.textSecondary,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Divider(
+                              color: AppDesignSystem.textTertiary.withOpacity(0.5),
+                              thickness: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            if (signup)
+                              _buildTextField(
+                                nameController,
+                                "Username",
+                                Icons.person,
+                              ),
+                            _buildTextField(
+                              emailController,
+                              signup ? "Email" : "Username",
+                              signup ? Icons.email : Icons.person,
+                            ),
+                            _buildTextField(
+                              passwordController,
+                              "Password",
+                              Icons.lock,
+                              isPassword: true,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: AppDesignSystem.paddingL),
+                    _buildActionButton(),
+                    SizedBox(height: AppDesignSystem.paddingM),
+                    GestureDetector(
+                      onTap: toggleAuthMode,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: AppDesignSystem.paddingS),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              signup
+                                  ? "Hai già un account?"
+                                  : "Non hai un account?",
+                              style: AppDesignSystem.bodyMedium.copyWith(
+                                color: AppDesignSystem.textSecondary,
+                              ),
+                            ),
+                            SizedBox(width: AppDesignSystem.paddingS),
+                            Text(
+                              signup ? "Accedi" : "Registrati",
+                              style: AppDesignSystem.bodyMedium.copyWith(
+                                color: AppDesignSystem.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: AppDesignSystem.paddingL),
+                  ],
+                ),
               ),
             ),
-          ),
-
-          // Effetto stellare
-          AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: SlowStarfieldPainter(
-                  animation: _animationController.value,
-                ),
-                size: Size.infinite,
-              );
-            },
-          ),
-
-          // Contenuto principale
-          SafeArea(
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                Image.asset(
-                  'assets/images/logo.png',
-                  height: 80,
-                  errorBuilder: (context, error, stackTrace) {
-                    // Mostra un'icona placeholder se il logo non viene caricato
-                    return Icon(
-                      Icons.rocket_launch, // Esempio di icona
-                      size: 80,
-                      color: Colors.white.withOpacity(0.7),
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade900.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(
-                        color: Colors.blue.shade400.withOpacity(0.5),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.blue.shade800.withOpacity(0.4),
-                          blurRadius: 15,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 20),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 70),
-                          child: Text(
-                            signup ? "Registrati" : "Accedi",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.blue.shade400,
-                                  blurRadius: 10,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          signup
-                              ? "Crea un nuovo account"
-                              : "Bentornato nel tuo spazio fitness",
-                          style: TextStyle(
-                            color: Colors.blue.shade100,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        _buildSocialLoginButtons(),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Divider(
-                                  color: Colors.blue.shade200.withOpacity(0.5),
-                                  thickness: 1,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                ),
-                                child: Text(
-                                  "oppure",
-                                  style: TextStyle(color: Colors.blue.shade100),
-                                ),
-                              ),
-                              Expanded(
-                                child: Divider(
-                                  color: Colors.blue.shade200.withOpacity(0.5),
-                                  thickness: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                if (signup)
-                                  _buildTextField(
-                                    nameController,
-                                    "Username",
-                                    Icons.person,
-                                  ),
-                                _buildTextField(
-                                  emailController,
-                                  signup ? "Email" : "Username",
-                                  signup ? Icons.email : Icons.person,
-                                ),
-                                _buildTextField(
-                                  passwordController,
-                                  "Password",
-                                  Icons.lock,
-                                  isPassword: true,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        _buildActionButton(),
-                        const SizedBox(height: 15),
-                        GestureDetector(
-                          onTap: toggleAuthMode,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  signup
-                                      ? "Hai già un account?"
-                                      : "Non hai un account?",
-                                  style: TextStyle(color: Colors.blue.shade100),
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  signup ? "Accedi" : "Registrati",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.blue.shade400,
-                                        blurRadius: 5,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-        ],
+            SizedBox(height: AppDesignSystem.paddingL),
+          ],
+        ),
       ),
     );
   }
-
   Widget _buildTextField(
     TextEditingController controller,
     String label,
@@ -257,93 +205,64 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
     bool isPassword = false,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 15),
+      margin: EdgeInsets.only(bottom: AppDesignSystem.paddingM),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(15),
+        color: AppDesignSystem.surfaceOverlay,
+        borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
         border: Border.all(
-          color: Colors.blue.shade300.withOpacity(0.5),
-          width: 1.5,
+          color: AppDesignSystem.primary.withOpacity(0.3),
+          width: 1,
         ),
       ),
       child: TextField(
         controller: controller,
         obscureText: isPassword,
-        style: const TextStyle(color: Colors.white),
+        style: AppDesignSystem.bodyMedium.copyWith(
+          color: AppDesignSystem.textPrimary,
+        ),
         decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: Colors.blue.shade300),
+          prefixIcon: Icon(icon, color: AppDesignSystem.primary),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: AppDesignSystem.paddingL,
+            vertical: AppDesignSystem.paddingM,
           ),
           hintText: label,
-          hintStyle: TextStyle(color: Colors.blue.shade100.withOpacity(0.7)),
+          hintStyle: AppDesignSystem.bodyMedium.copyWith(
+            color: AppDesignSystem.textTertiary,
+          ),
         ),
       ),
     );
   }
-
   Widget _buildSocialLoginButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildSocialButton(Icons.g_mobiledata, Colors.red),
-        const SizedBox(width: 20),
-        _buildSocialButton(Icons.facebook, Colors.blue),
-        const SizedBox(width: 20),
-        _buildSocialButton(Icons.apple, Colors.white),
+        _buildSocialButton(Icons.g_mobiledata, AppDesignSystem.error),
+        SizedBox(width: AppDesignSystem.paddingL),
+        _buildSocialButton(Icons.facebook, AppDesignSystem.primary),
+        SizedBox(width: AppDesignSystem.paddingL),
+        _buildSocialButton(Icons.apple, AppDesignSystem.textPrimary),
       ],
     );
   }
 
   Widget _buildSocialButton(IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(AppDesignSystem.paddingM),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.3),
+        color: AppDesignSystem.surfaceOverlay,
         shape: BoxShape.circle,
-        border: Border.all(color: color.withOpacity(0.5), width: 1.5),
+        border: Border.all(color: color.withOpacity(0.5), width: 1),
       ),
       child: Icon(icon, color: color, size: 24),
     );
-  }
-
-  Widget _buildActionButton() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blue.shade700, Colors.indigo.shade800],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.shade700.withOpacity(0.5),
-            blurRadius: 10,
-            spreadRadius: 0,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: signup ? _signUp : _signIn,
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-        ),
-        child: Text(
-          signup ? "Registrati" : "Accedi",
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
+  }  Widget _buildActionButton() {
+    return AppComponents.primaryButton(
+      text: signup ? "Registrati" : "Accedi",
+      onPressed: signup ? _signUp : _signIn,
+      fullWidth: true,
     );
   }
 

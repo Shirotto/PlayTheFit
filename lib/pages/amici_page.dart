@@ -3,6 +3,9 @@ import '../models/friendship.dart';
 import '../services/friendship_service.dart';
 import '../services/chat_service.dart';
 import 'chat_detail_page.dart';
+import '../theme/app_design_system.dart';
+import '../widgets/app_components.dart';
+import '../widgets/app_background.dart';
 
 class AmiciPage extends StatefulWidget {
   final int initialTabIndex;
@@ -68,16 +71,22 @@ class _AmiciPageState extends State<AmiciPage>
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
-        title: const Text('Amici'),
-        backgroundColor: Colors.purple.shade800,
+        title: Text(
+          'Amici',
+          style: AppDesignSystem.headingMedium.copyWith(
+            color: AppDesignSystem.textPrimary,
+          ),
+        ),
+        backgroundColor: AppDesignSystem.darkPrimary,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
+          indicatorColor: AppDesignSystem.primary,
+          labelColor: AppDesignSystem.textPrimary,
+          unselectedLabelColor: AppDesignSystem.textSecondary,
           tabs: const [
             Tab(text: "Amici"),
             Tab(text: "Richieste"),
@@ -85,7 +94,6 @@ class _AmiciPageState extends State<AmiciPage>
           ],
         ),
       ),
-      backgroundColor: Colors.black87,
       body: TabBarView(
         controller: _tabController,
         children: [_buildFriendsTab(), _buildRequestsTab(), _buildSearchTab()],
@@ -96,64 +104,35 @@ class _AmiciPageState extends State<AmiciPage>
   Widget _buildFriendsTab() {
     return StreamBuilder<List<Friend>>(
       stream: _friendshipService.getFriends(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+      builder: (context, snapshot) {        if (snapshot.connectionState == ConnectionState.waiting) {
+          return AppComponents.loadingIndicator();
         }
 
         final friends = snapshot.data ?? [];
 
         if (friends.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.person_off,
-                  size: 80,
-                  color: Colors.purple.shade200.withOpacity(0.7),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Nessun amico',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white70,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Vai alla sezione "Cerca" per aggiungere amici',
-                  style: TextStyle(fontSize: 14, color: Colors.white54),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+          return AppComponents.emptyState(
+            icon: Icons.person_off,
+            title: 'Nessun amico',
+            subtitle: 'Vai alla sezione "Cerca" per aggiungere amici',
+            iconColor: AppDesignSystem.accent,
           );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(8),
+        }        return ListView.builder(
+          padding: const EdgeInsets.all(AppDesignSystem.paddingM),
           itemCount: friends.length,
           itemBuilder: (context, index) {
             final friend = friends[index];
-            return Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              color: Colors.grey.shade900,
-              margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-              elevation: 2,
+            return AppComponents.standardCard(
+              margin: const EdgeInsets.only(bottom: AppDesignSystem.paddingS),
               child: ListTile(
                 leading: Stack(
                   children: [
                     CircleAvatar(
-                      backgroundColor: Colors.purple.shade400,
+                      backgroundColor: AppDesignSystem.primary,
                       child: Text(
                         friend.username.substring(0, 1).toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: AppDesignSystem.bodyMedium.copyWith(
+                          color: AppDesignSystem.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -165,10 +144,10 @@ class _AmiciPageState extends State<AmiciPage>
                         width: 15,
                         height: 15,
                         decoration: BoxDecoration(
-                          color: friend.isOnline ? Colors.green : Colors.grey,
+                          color: friend.isOnline ? AppDesignSystem.success : AppDesignSystem.textTertiary,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.grey.shade900,
+                            color: AppDesignSystem.cardBackground,
                             width: 2,
                           ),
                         ),
@@ -178,22 +157,25 @@ class _AmiciPageState extends State<AmiciPage>
                 ),
                 title: Text(
                   friend.username,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: AppDesignSystem.bodyMedium.copyWith(
+                    color: AppDesignSystem.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                subtitle:
-                    friend.isOnline
-                        ? const Text(
-                          'Online',
-                          style: TextStyle(color: Colors.green),
-                        )
-                        : friend.lastOnline != null
+                subtitle: friend.isOnline
+                    ? Text(
+                        'Online',
+                        style: AppDesignSystem.bodySmall.copyWith(
+                          color: AppDesignSystem.success,
+                        ),
+                      )
+                    : friend.lastOnline != null
                         ? Text(
-                          'Ultimo accesso: ${_formatLastSeen(friend.lastOnline!)}',
-                          style: const TextStyle(color: Colors.grey),
-                        )
+                            'Ultimo accesso: ${_formatLastSeen(friend.lastOnline!)}',
+                            style: AppDesignSystem.bodySmall.copyWith(
+                              color: AppDesignSystem.textSecondary,
+                            ),
+                          )
                         : null,
                 trailing: null,
                 onTap: () => _showFriendProfile(friend),
@@ -208,12 +190,11 @@ class _AmiciPageState extends State<AmiciPage>
   Widget _buildRequestsTab() {
     return DefaultTabController(
       length: 2,
-      child: Column(
-        children: [
+      child: Column(        children: [
           TabBar(
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white60,
-            indicatorColor: Colors.purple.shade300,
+            labelColor: AppDesignSystem.textPrimary,
+            unselectedLabelColor: AppDesignSystem.textSecondary,
+            indicatorColor: AppDesignSystem.primary,
             tabs: const [Tab(text: "Ricevute"), Tab(text: "Inviate")],
           ),
           Expanded(
@@ -232,93 +213,70 @@ class _AmiciPageState extends State<AmiciPage>
   Widget _buildIncomingRequestsList() {
     return StreamBuilder<List<FriendRequest>>(
       stream: _friendshipService.getIncomingFriendRequests(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+      builder: (context, snapshot) {        if (snapshot.connectionState == ConnectionState.waiting) {
+          return AppComponents.loadingIndicator();
         }
 
         final requests = snapshot.data ?? [];
 
         if (requests.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.mail,
-                  size: 80,
-                  color: Colors.purple.shade200.withOpacity(0.7),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Nessuna richiesta di amicizia',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white70,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+          return AppComponents.emptyState(
+            icon: Icons.mail,
+            title: 'Nessuna richiesta di amicizia',
+            subtitle: '',
+            iconColor: AppDesignSystem.accent,
           );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(8),
+        }        return ListView.builder(
+          padding: const EdgeInsets.all(AppDesignSystem.paddingM),
           itemCount: requests.length,
           itemBuilder: (context, index) {
             final request = requests[index];
-            return Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              color: Colors.grey.shade900,
-              margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-              elevation: 2,
+            return AppComponents.standardCard(
+              margin: const EdgeInsets.only(bottom: AppDesignSystem.paddingS),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Colors.blue.shade400,
+                  backgroundColor: AppDesignSystem.secondary,
                   child: Text(
                     request.fromUserName.substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: AppDesignSystem.bodyMedium.copyWith(
+                      color: AppDesignSystem.textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
                 title: Text(
                   request.fromUserName,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: AppDesignSystem.bodyMedium.copyWith(
+                    color: AppDesignSystem.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                subtitle: const Text(
+                subtitle: Text(
                   'Vuole aggiungerti come amico',
-                  style: TextStyle(color: Colors.white70),
+                  style: AppDesignSystem.bodySmall.copyWith(
+                    color: AppDesignSystem.textSecondary,
+                  ),
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _actionButton(
                       icon: Icons.check,
-                      color: Colors.green,
-                      onPressed:
-                          () => _respondToFriendRequest(
-                            request.id,
-                            FriendshipStatus.accepted,
-                          ),
+                      color: AppDesignSystem.success,
+                      onPressed: () => _respondToFriendRequest(
+                        request.id,
+                        FriendshipStatus.accepted,
+                      ),
                       tooltip: 'Accetta',
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppDesignSystem.paddingXS),
                     _actionButton(
                       icon: Icons.close,
-                      color: Colors.red,
-                      onPressed:
-                          () => _respondToFriendRequest(
-                            request.id,
-                            FriendshipStatus.rejected,
-                          ),
+                      color: AppDesignSystem.error,
+                      onPressed: () => _respondToFriendRequest(
+                        request.id,
+                        FriendshipStatus.rejected,
+                      ),
                       tooltip: 'Rifiuta',
                     ),
                   ],
@@ -334,72 +292,54 @@ class _AmiciPageState extends State<AmiciPage>
   Widget _buildOutgoingRequestsList() {
     return StreamBuilder<List<FriendRequest>>(
       stream: _friendshipService.getOutgoingFriendRequests(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+      builder: (context, snapshot) {        if (snapshot.connectionState == ConnectionState.waiting) {
+          return AppComponents.loadingIndicator();
         }
 
         final requests = snapshot.data ?? [];
 
         if (requests.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.send,
-                  size: 80,
-                  color: Colors.purple.shade200.withOpacity(0.7),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Nessuna richiesta inviata',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white70,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+          return AppComponents.emptyState(
+            icon: Icons.send,
+            title: 'Nessuna richiesta inviata',
+            subtitle: '',
+            iconColor: AppDesignSystem.accent,
           );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(8),
+        }        return ListView.builder(
+          padding: const EdgeInsets.all(AppDesignSystem.paddingM),
           itemCount: requests.length,
           itemBuilder: (context, index) {
             final request = requests[index];
-            return Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              color: Colors.grey.shade900,
-              margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-              elevation: 2,
+            return AppComponents.standardCard(
+              margin: const EdgeInsets.only(bottom: AppDesignSystem.paddingS),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Colors.orange.shade400,
+                  backgroundColor: AppDesignSystem.warning,
                   child: Text(
                     request.toUserName.substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: AppDesignSystem.bodyMedium.copyWith(
+                      color: Colors.black,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
                 title: Text(
                   request.toUserName,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: AppDesignSystem.bodyMedium.copyWith(
+                    color: AppDesignSystem.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                subtitle: const Text(
+                subtitle: Text(
                   'Richiesta in attesa',
-                  style: TextStyle(color: Colors.white70),
+                  style: AppDesignSystem.bodySmall.copyWith(
+                    color: AppDesignSystem.textSecondary,
+                  ),
                 ),
-                trailing: const Icon(Icons.pending, color: Colors.amber),
+                trailing: Icon(
+                  Icons.pending,
+                  color: AppDesignSystem.warning,
+                ),
               ),
             );
           },
@@ -409,107 +349,87 @@ class _AmiciPageState extends State<AmiciPage>
   }
 
   Widget _buildSearchTab() {
-    return Column(
-      children: [
+    return Column(      children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(AppDesignSystem.paddingM),
           child: Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _searchController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
+                  style: AppDesignSystem.bodyMedium.copyWith(
+                    color: AppDesignSystem.textPrimary,
+                  ),
+                  decoration: AppDesignSystem.inputDecoration(
                     hintText: 'Cerca utenti',
-                    hintStyle: const TextStyle(color: Colors.white54),
-                    filled: true,
-                    fillColor: Colors.grey[800],
-                    prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
+                    prefixIcon: Icons.search,
                   ),
                   onSubmitted: (_) => _searchUsers(),
                 ),
               ),
-              const SizedBox(width: 10),
-              ElevatedButton(
+              const SizedBox(width: AppDesignSystem.paddingS),
+              AppComponents.primaryButton(
+                text: 'Cerca',
                 onPressed: _searchUsers,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple.shade700,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                ),
-                child: const Text('Cerca'),
               ),
             ],
           ),
-        ),
-        Expanded(
-          child:
-              _isSearching
-                  ? const Center(child: CircularProgressIndicator())
-                  : _searchResults.isEmpty && _searchController.text.isNotEmpty
-                  ? const Center(
-                    child: Text(
-                      'Nessun utente trovato',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                  )
+        ),        Expanded(
+          child: _isSearching
+              ? AppComponents.loadingIndicator()
+              : _searchResults.isEmpty && _searchController.text.isNotEmpty
+                  ? AppComponents.emptyState(
+                      icon: Icons.search_off,
+                      title: 'Nessun utente trovato',
+                      subtitle: '',
+                      iconColor: AppDesignSystem.textSecondary,
+                    )
                   : ListView.builder(
-                    padding: const EdgeInsets.all(8),
-                    itemCount: _searchResults.length,
-                    itemBuilder: (context, index) {
-                      final user = _searchResults[index];
-                      return Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        color: Colors.grey.shade900,
-                        margin: const EdgeInsets.symmetric(
-                          vertical: 6,
-                          horizontal: 4,
-                        ),
-                        elevation: 2,
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.teal.shade400,
-                            child: Text(
-                              (user['username'] as String)
-                                  .substring(0, 1)
-                                  .toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
+                      padding: const EdgeInsets.all(AppDesignSystem.paddingM),
+                      itemCount: _searchResults.length,
+                      itemBuilder: (context, index) {
+                        final user = _searchResults[index];
+                        return AppComponents.standardCard(
+                          margin: const EdgeInsets.only(bottom: AppDesignSystem.paddingS),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: AppDesignSystem.accent,
+                              child: Text(
+                                (user['username'] as String)
+                                    .substring(0, 1)
+                                    .toUpperCase(),
+                                style: AppDesignSystem.bodyMedium.copyWith(
+                                  color: AppDesignSystem.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              user['username'],
+                              style: AppDesignSystem.bodyMedium.copyWith(
+                                color: AppDesignSystem.textPrimary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ),
-                          title: Text(
-                            user['username'],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                            subtitle: Text(
+                              user['email'],
+                              style: AppDesignSystem.bodySmall.copyWith(
+                                color: AppDesignSystem.textSecondary,
+                              ),
+                            ),
+                            trailing: AppComponents.iconButton(
+                              icon: Icons.person_add,
+                              onPressed: () => _sendFriendRequest(
+                                user['id'],
+                                user['username'],
+                              ),
+                              iconColor: AppDesignSystem.success,
+                              tooltip: 'Aggiungi amico',
                             ),
                           ),
-                          subtitle: Text(
-                            user['email'],
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.person_add,
-                              color: Colors.green,
-                            ),
-                            onPressed:
-                                () => _sendFriendRequest(
-                                  user['id'],
-                                  user['username'],
-                                ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    ),
         ),
       ],
     );
@@ -520,11 +440,10 @@ class _AmiciPageState extends State<AmiciPage>
     required Color color,
     required VoidCallback onPressed,
     required String tooltip,
-  }) {
-    return Container(
+  }) {    return Container(
       decoration: BoxDecoration(
         color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
       ),
       child: IconButton(
         icon: Icon(icon, color: color),
@@ -580,27 +499,32 @@ class _AmiciPageState extends State<AmiciPage>
         );
       }
     }
-  }
-
-  // Mostra un dialog con le opzioni per l'amico
+  }  // Mostra un dialog con le opzioni per l'amico
   void _showFriendOptionsDialog(Friend friend) {
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: Colors.grey.shade900,
+            backgroundColor: AppDesignSystem.cardBackground,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDesignSystem.radiusL),
+            ),
             title: Text(
               friend.username,
-              style: const TextStyle(color: Colors.white),
+              style: AppDesignSystem.headingSmall.copyWith(
+                color: AppDesignSystem.textPrimary,
+              ),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.person, color: Colors.blue),
-                  title: const Text(
+                  leading: Icon(Icons.person, color: AppDesignSystem.primary),
+                  title: Text(
                     'Visualizza profilo',
-                    style: TextStyle(color: Colors.white),
+                    style: AppDesignSystem.bodyMedium.copyWith(
+                      color: AppDesignSystem.textPrimary,
+                    ),
                   ),
                   onTap: () {
                     Navigator.pop(context);
@@ -608,10 +532,12 @@ class _AmiciPageState extends State<AmiciPage>
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.chat, color: Colors.green),
-                  title: const Text(
+                  leading: Icon(Icons.chat, color: AppDesignSystem.success),
+                  title: Text(
                     'Invia messaggio',
-                    style: TextStyle(color: Colors.white),
+                    style: AppDesignSystem.bodyMedium.copyWith(
+                      color: AppDesignSystem.textPrimary,
+                    ),
                   ),
                   onTap: () {
                     Navigator.pop(context);
@@ -619,10 +545,12 @@ class _AmiciPageState extends State<AmiciPage>
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text(
+                  leading: Icon(Icons.delete, color: AppDesignSystem.error),
+                  title: Text(
                     'Rimuovi amico',
-                    style: TextStyle(color: Colors.white),
+                    style: AppDesignSystem.bodyMedium.copyWith(
+                      color: AppDesignSystem.textPrimary,
+                    ),
                   ),
                   onTap: () {
                     Navigator.pop(context);
@@ -634,95 +562,109 @@ class _AmiciPageState extends State<AmiciPage>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Chiudi'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppDesignSystem.primary,
+                ),
+                child: Text(
+                  'Chiudi',
+                  style: AppDesignSystem.bodyMedium.copyWith(
+                    color: AppDesignSystem.primary,
+                  ),
+                ),
               ),
             ],
           ),
     );
   }
-
   // Mostra il profilo dell'amico
   void _showFriendProfile(Friend friend) {
     showDialog(
       context: context,
       builder:
           (context) => Dialog(
-            backgroundColor: Colors.grey.shade900,
+            backgroundColor: AppDesignSystem.cardBackground,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppDesignSystem.radiusXL),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(AppDesignSystem.paddingL),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundColor: Colors.purple.shade400,
+                    backgroundColor: AppDesignSystem.secondary,
                     child: Text(
                       friend.username.substring(0, 1).toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: AppDesignSystem.headingLarge.copyWith(
+                        color: AppDesignSystem.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 40,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppDesignSystem.paddingM),
                   Text(
                     friend.username,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: AppDesignSystem.headingMedium.copyWith(
+                      color: AppDesignSystem.textPrimary,
                       fontWeight: FontWeight.bold,
-                      fontSize: 22,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDesignSystem.paddingS),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: AppDesignSystem.paddingM,
+                      vertical: AppDesignSystem.paddingS,
                     ),
                     decoration: BoxDecoration(
-                      color: friend.isOnline ? Colors.green : Colors.grey,
-                      borderRadius: BorderRadius.circular(20),
+                      color: friend.isOnline ? AppDesignSystem.success : AppDesignSystem.textTertiary,
+                      borderRadius: BorderRadius.circular(AppDesignSystem.radiusXL),
                     ),
                     child: Text(
                       friend.isOnline ? 'Online' : 'Offline',
-                      style: const TextStyle(color: Colors.white),
+                      style: AppDesignSystem.bodySmall.copyWith(
+                        color: AppDesignSystem.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppDesignSystem.paddingL),
                   Text(
                     'Amici da: ${_formatDateTime(friend.addedAt)}',
-                    style: const TextStyle(color: Colors.white70),
+                    style: AppDesignSystem.bodyMedium.copyWith(
+                      color: AppDesignSystem.textSecondary,
+                    ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppDesignSystem.paddingL),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.chat),
-                        label: const Text('Messaggio'),
+                      AppComponents.successButton(
+                        text: 'Messaggio',
+                        icon: Icons.chat,
                         onPressed: () {
                           Navigator.pop(context);
                           _navigateToChat(friend);
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                        ),
                       ),
                       ElevatedButton.icon(
-                        icon: const Icon(Icons.delete),
+                        icon: const Icon(Icons.delete, size: 18),
                         label: const Text('Rimuovi'),
                         onPressed: () {
                           Navigator.pop(context);
                           _showRemoveFriendDialog(friend);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
+                          backgroundColor: AppDesignSystem.error,
+                          foregroundColor: AppDesignSystem.textPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppDesignSystem.paddingM,
+                            vertical: AppDesignSystem.paddingS,
+                          ),
                         ),
                       ),
                     ],
@@ -737,14 +679,12 @@ class _AmiciPageState extends State<AmiciPage>
   // Naviga alla chat con l'amico
   void _navigateToChat(Friend friend) async {
     // Ottieni il servizio chat
-    final chatService = ChatService();
-
-    // Mostra indicatore di caricamento
+    final chatService = ChatService();    // Mostra indicatore di caricamento
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return const Center(child: CircularProgressIndicator());
+        return Center(child: AppComponents.loadingIndicator());
       },
     );
 
@@ -779,29 +719,45 @@ class _AmiciPageState extends State<AmiciPage>
       );
     }
   }
-
   // Mostra dialog di conferma per rimuovere un amico
   void _showRemoveFriendDialog(Friend friend) {
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: Colors.grey.shade900,
-            title: const Text(
+            backgroundColor: AppDesignSystem.cardBackground,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDesignSystem.radiusL),
+            ),
+            title: Text(
               'Rimuovere amico?',
-              style: TextStyle(color: Colors.white),
+              style: AppDesignSystem.headingSmall.copyWith(
+                color: AppDesignSystem.textPrimary,
+              ),
             ),
             content: Text(
               'Sei sicuro di voler rimuovere ${friend.username} dalla tua lista amici?',
-              style: const TextStyle(color: Colors.white70),
+              style: AppDesignSystem.bodyMedium.copyWith(
+                color: AppDesignSystem.textSecondary,
+              ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Annulla'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppDesignSystem.textSecondary,
+                ),
+                child: Text(
+                  'Annulla',
+                  style: AppDesignSystem.bodyMedium.copyWith(
+                    color: AppDesignSystem.textSecondary,
+                  ),
+                ),
               ),
               TextButton(
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppDesignSystem.error,
+                ),
                 onPressed: () async {
                   Navigator.pop(context);
                   final success = await _friendshipService.removeFriend(
@@ -813,12 +769,22 @@ class _AmiciPageState extends State<AmiciPage>
                       SnackBar(
                         content: Text(
                           '${friend.username} rimosso dalla lista amici',
+                          style: AppDesignSystem.bodyMedium.copyWith(
+                            color: AppDesignSystem.textPrimary,
+                          ),
                         ),
+                        backgroundColor: AppDesignSystem.success,
                       ),
                     );
                   }
                 },
-                child: const Text('Rimuovi'),
+                child: Text(
+                  'Rimuovi',
+                  style: AppDesignSystem.bodyMedium.copyWith(
+                    color: AppDesignSystem.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),

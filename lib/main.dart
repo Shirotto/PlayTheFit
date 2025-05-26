@@ -3,6 +3,7 @@ import 'package:playthefit/pages/login.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'services/firestore_setup_service.dart';
 import 'services/notification_service.dart';
 import 'firebase_options.dart';
@@ -10,6 +11,9 @@ import 'firebase_options.dart';
 void main() async {
   // Inizializzazione dei binding di Flutter
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inizializzazione delle localizzazioni per date e orari
+  await initializeDateFormatting('it_IT', null);
 
   // Inizializzazione di Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

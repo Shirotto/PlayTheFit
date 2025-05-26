@@ -4,6 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/esercizio.dart';
 import '../services/mission_service.dart';
+import '../theme/app_design_system.dart';
+import '../widgets/app_components.dart';
+import '../widgets/app_background.dart';
 import 'home_screen.dart'; // Assicurati di importare la HomeScreen
 
 class SchedaAllenamentoPage extends StatefulWidget {
@@ -94,134 +97,119 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
     final pesoController = TextEditingController(text: esercizio?.peso ?? "");
     final recuperoController = TextEditingController(
       text: esercizio?.recupero ?? "",
-    );
-
-    showDialog(
+    );    showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            backgroundColor: Colors.blue.shade900.withOpacity(0.95),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: Colors.blue.shade400, width: 2),
-            ),
-            title: Text(
-              esercizio == null ? "Aggiungi Esercizio" : "Modifica Esercizio",
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-                shadows: [Shadow(color: Colors.blue, blurRadius: 5)],
+      builder: (_) => AlertDialog(
+        backgroundColor: AppDesignSystem.cardBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDesignSystem.radiusL),
+        ),
+        title: Text(
+          esercizio == null ? "Aggiungi Esercizio" : "Modifica Esercizio",
+          style: AppDesignSystem.headingSmall.copyWith(
+            color: AppDesignSystem.textPrimary,
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildTextField(nomeController, "Nome", Icons.fitness_center),
+              _buildTextField(
+                serieController,
+                "Serie",
+                Icons.repeat,
+                isNumeric: true,
               ),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildTextField(nomeController, "Nome", Icons.fitness_center),
-                  _buildTextField(
-                    serieController,
-                    "Serie",
-                    Icons.repeat,
-                    isNumeric: true,
-                  ),
-                  _buildTextField(
-                    ripetizioniController,
-                    "Ripetizioni",
-                    Icons.format_list_numbered,
-                    isNumeric: true,
-                  ),
-                  _buildTextField(pesoController, "Peso", Icons.fitness_center),
-                  _buildTextField(recuperoController, "Recupero", Icons.timer),
-                ],
+              _buildTextField(
+                ripetizioniController,
+                "Ripetizioni",
+                Icons.format_list_numbered,
+                isNumeric: true,
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                style: TextButton.styleFrom(foregroundColor: Colors.white70),
-                child: const Text("Annulla"),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade700,
-                  foregroundColor: Colors.white,
-                  elevation: 8,
-                  shadowColor: Colors.blue.shade400,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
-                  final nuovo = Esercizio(
-                    nomeController.text.isEmpty
-                        ? "Nuovo esercizio"
-                        : nomeController.text,
-                    int.tryParse(serieController.text) ?? 3,
-                    int.tryParse(ripetizioniController.text) ?? 10,
-                    pesoController.text,
-                    recuperoController.text,
-                    false,
-                  );
-
-                  setState(() {
-                    if (esercizio == null) {
-                      esercizi.add(nuovo);
-                    } else if (index != null) {
-                      esercizi[index] = nuovo;
-                    }
-                  });
-                  salvaEserciziSuFirestore();
-                  Navigator.pop(context);
-                },
-                child: const Text("Salva"),
-              ),
+              _buildTextField(pesoController, "Peso", Icons.fitness_center),
+              _buildTextField(recuperoController, "Recupero", Icons.timer),
             ],
           ),
-    );
-  }
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: AppDesignSystem.textSecondary,
+            ),
+            child: const Text("Annulla"),
+          ),
+          AppComponents.successButton(
+            text: "Salva",
+            onPressed: () {
+              final nuovo = Esercizio(
+                nomeController.text.isEmpty
+                    ? "Nuovo esercizio"
+                    : nomeController.text,
+                int.tryParse(serieController.text) ?? 3,
+                int.tryParse(ripetizioniController.text) ?? 10,
+                pesoController.text,
+                recuperoController.text,
+                false,
+              );
 
-  Widget _buildTextField(
+              setState(() {
+                if (esercizio == null) {
+                  esercizi.add(nuovo);
+                } else if (index != null) {
+                  esercizi[index] = nuovo;
+                }
+              });
+              salvaEserciziSuFirestore();
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }  Widget _buildTextField(
     TextEditingController controller,
     String label,
     IconData icon, {
     bool isNumeric = false,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: EdgeInsets.symmetric(vertical: AppDesignSystem.paddingXS),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.shade300.withOpacity(0.5)),
+        color: AppDesignSystem.surfaceOverlay,
+        borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
+        border: Border.all(color: AppDesignSystem.primary.withOpacity(0.3)),
       ),
       child: TextField(
         controller: controller,
         keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
-        style: const TextStyle(color: Colors.white),
+        style: AppDesignSystem.bodyMedium.copyWith(
+          color: AppDesignSystem.textPrimary,
+        ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.blue.shade100),
-          prefixIcon: Icon(icon, color: Colors.blue.shade300),
+          labelStyle: AppDesignSystem.bodyMedium.copyWith(
+            color: AppDesignSystem.textSecondary,
+          ),
+          prefixIcon: Icon(icon, color: AppDesignSystem.primary),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: AppDesignSystem.paddingM,
+            vertical: AppDesignSystem.paddingM,
           ),
         ),
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Elimina il backgroundColor perché useremo lo stesso gradient della HomeScreen
-      extendBodyBehindAppBar: true,
+    return AppScaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: AppDesignSystem.textPrimary),
           onPressed: () {
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -231,15 +219,14 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
         ),
         title: Text(
           "Scheda di Allenamento",
-          style: TextStyle(
-            color: Colors.white,
+          style: AppDesignSystem.headingMedium.copyWith(
+            color: AppDesignSystem.textPrimary,
             fontWeight: FontWeight.bold,
-            shadows: [Shadow(color: Colors.blue.shade700, blurRadius: 8)],
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.save, color: Colors.white),
+            icon: Icon(Icons.save, color: AppDesignSystem.textPrimary),
             onPressed: () async {
               final completedEsercizi =
                   esercizi.where((e) => e.completato).length;
@@ -253,17 +240,22 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(message),
-                  backgroundColor: Colors.blue.shade700,
+                  content: Text(
+                    message,
+                    style: AppDesignSystem.bodyMedium.copyWith(
+                      color: AppDesignSystem.textPrimary,
+                    ),
+                  ),
+                  backgroundColor: AppDesignSystem.success,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
                   ),
                   action:
                       completedEsercizi > 0
                           ? SnackBarAction(
                             label: 'Vedi Missioni',
-                            textColor: Colors.white,
+                            textColor: AppDesignSystem.textPrimary,
                             onPressed: () {
                               Navigator.of(context).pushAndRemoveUntil(
                                 MaterialPageRoute(
@@ -281,216 +273,129 @@ class _SchedaAllenamentoPageState extends State<SchedaAllenamentoPage>
             },
           ),
         ],
-      ),
-      body: Stack(
+      ),      body: ListView(
+        padding: const EdgeInsets.all(AppDesignSystem.paddingM),
         children: [
-          // Sfondo con gradiente - ESATTAMENTE come nella HomeScreen
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.indigo.shade900, Colors.black],
+          if (esercizi.isEmpty)
+            AppComponents.emptyState(
+              icon: Icons.fitness_center,
+              title: 'Nessun esercizio',
+              subtitle: 'Aggiungi il tuo primo esercizio per iniziare!',
+              iconColor: AppDesignSystem.primary,
+              action: AppComponents.primaryButton(
+                text: 'Aggiungi Esercizio',
+                icon: Icons.add,
+                onPressed: () => mostraDialogEsercizio(),
+              ),
+            )
+          else ...[
+            ...List.generate(
+              esercizi.length,
+              (index) => Padding(
+                padding: const EdgeInsets.only(bottom: AppDesignSystem.paddingM),
+                child: _buildEsercizioCard(
+                  esercizi[index],
+                  onEdit:
+                      () => mostraDialogEsercizio(
+                        esercizio: esercizi[index],
+                        index: index,
+                      ),
+                  onDelete: () => eliminaEsercizio(index),
+                  onToggle: (_) => toggleCompletato(index),
+                ),
               ),
             ),
-          ),
-
-          // Stelle/particelle - ESATTAMENTE come nella HomeScreen
-          AnimatedBuilder(
-            animation: _particleAnimationController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: SlowStarfieldPainter(
-                  animation: _particleAnimationController.value,
-                ),
-                size: Size.infinite,
-              );
-            },
-          ),
-
-          // Contenuto
-          SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                ...List.generate(
-                  esercizi.length,
-                  (index) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _buildEsercizioCard(
-                      esercizi[index],
-                      onEdit:
-                          () => mostraDialogEsercizio(
-                            esercizio: esercizi[index],
-                            index: index,
-                          ),
-                      onDelete: () => eliminaEsercizio(index),
-                      onToggle: (_) => toggleCompletato(index),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildAddButton(),
-              ],
-            ),
-          ),
+            const SizedBox(height: AppDesignSystem.paddingM),
+            _buildAddButton(),
+          ],
         ],
       ),
     );
   }
-
   Widget _buildEsercizioCard(
     Esercizio esercizio, {
     required Function() onEdit,
     required Function() onDelete,
     required Function(bool?) onToggle,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors:
-              esercizio.completato
-                  ? [Colors.purple.shade900, Colors.blue.shade900]
-                  : [Colors.blue.shade900, Colors.indigo.shade900],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color:
-                esercizio.completato
-                    ? Colors.purple.withOpacity(0.4)
-                    : Colors.blue.withOpacity(0.3),
-            blurRadius: 12,
-            spreadRadius: 1,
+    return AppComponents.standardCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  esercizio.nome,
+                  style: AppDesignSystem.headingSmall.copyWith(
+                    color: AppDesignSystem.textPrimary,
+                    decoration: esercizio.completato ? TextDecoration.lineThrough : null,
+                    decorationColor: AppDesignSystem.textSecondary,
+                  ),
+                ),
+              ),
+              Checkbox(
+                value: esercizio.completato,
+                onChanged: onToggle,
+                fillColor: MaterialStateProperty.resolveWith(
+                  (states) => esercizio.completato ? AppDesignSystem.success : AppDesignSystem.primary,
+                ),
+                checkColor: AppDesignSystem.cardBackground,
+              ),
+            ],
+          ),
+          SizedBox(height: AppDesignSystem.paddingM),
+          _buildInfoRow(
+            Icons.repeat,
+            "${esercizio.serie} serie x ${esercizio.ripetizioni} rip",
+          ),
+          _buildInfoRow(Icons.fitness_center, "Peso: ${esercizio.peso}"),
+          _buildInfoRow(Icons.timer, "Recupero: ${esercizio.recupero}"),
+          SizedBox(height: AppDesignSystem.paddingM),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              AppComponents.iconButton(
+                icon: Icons.edit,
+                onPressed: onEdit,
+                iconColor: AppDesignSystem.warning,
+              ),
+              SizedBox(width: AppDesignSystem.paddingM),
+              AppComponents.iconButton(
+                icon: Icons.delete,
+                onPressed: onDelete,
+                iconColor: AppDesignSystem.error,
+              ),
+            ],
           ),
         ],
-        border: Border.all(
-          color:
-              esercizio.completato
-                  ? Colors.purple.withOpacity(0.5)
-                  : Colors.blue.shade400.withOpacity(0.5),
-          width: 1.5,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    esercizio.nome,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      decoration:
-                          esercizio.completato
-                              ? TextDecoration.lineThrough
-                              : null,
-                      decorationColor: Colors.white70,
-                      shadows: [
-                        Shadow(color: Colors.blue.shade400, blurRadius: 5),
-                      ],
-                    ),
-                  ),
-                ),
-                Checkbox(
-                  value: esercizio.completato,
-                  onChanged: onToggle,
-                  fillColor: MaterialStateProperty.resolveWith(
-                    (states) => Colors.blue.shade700,
-                  ),
-                  checkColor: Colors.white,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildInfoRow(
-              Icons.repeat,
-              "${esercizio.serie} serie x ${esercizio.ripetizioni} rip",
-            ),
-            _buildInfoRow(Icons.fitness_center, "Peso: ${esercizio.peso}"),
-            _buildInfoRow(Icons.timer, "Recupero: ${esercizio.recupero}"),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                _buildIconButton(Icons.edit, onEdit, Colors.amber),
-                const SizedBox(width: 12),
-                _buildIconButton(Icons.delete, onDelete, Colors.red),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
-
   Widget _buildInfoRow(IconData icon, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: AppDesignSystem.paddingXS),
       child: Row(
         children: [
-          Icon(icon, color: Colors.blue.shade300, size: 18),
-          const SizedBox(width: 8),
-          Text(text, style: const TextStyle(color: Colors.white, fontSize: 16)),
+          Icon(icon, color: AppDesignSystem.primary, size: 18),
+          SizedBox(width: AppDesignSystem.paddingXS),
+          Text(
+            text,
+            style: AppDesignSystem.bodyMedium.copyWith(
+              color: AppDesignSystem.textSecondary,
+            ),
+          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildIconButton(IconData icon, Function() onTap, Color color) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.black26,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.5)),
-        ),
-        child: Icon(icon, color: color, size: 20),
       ),
     );
   }
 
   Widget _buildAddButton() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blue.shade700, Colors.indigo.shade800],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
-            blurRadius: 12,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: ElevatedButton.icon(
-        onPressed: () => mostraDialogEsercizio(),
-        icon: const Icon(Icons.add),
-        label: const Text("Aggiungi esercizio"),
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-        ),
-      ),
+    return AppComponents.primaryButton(
+      text: "Aggiungi esercizio",
+      icon: Icons.add,
+      onPressed: () => mostraDialogEsercizio(),
     );
   }
   Future<void> salvaEserciziSuFirestore() async {
